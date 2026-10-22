@@ -4,6 +4,10 @@
   const COLS = 10;
   const ROWS = 20;
   const CELL = 30;
+  const CLEAR_FLASH_MS = 65;
+  const CLEAR_SHATTER_MS = 160;
+  const SETTLE_MS = 110;
+  const PARTICLES_PER_CELL = 4;
   const COLORS = {
     I: "#38c9ea", O: "#fbd15c", T: "#bd93f9", S: "#57d99b",
     Z: "#ff6b82", J: "#7199ff", L: "#ffac64"
@@ -55,6 +59,9 @@
   let elapsed = 0;
   let best = readBest();
   let lockCount = 0;
+  let clearAnimation = null;
+  let settleAnimation = null;
+  const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   function emptyBoard() {
     return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
@@ -160,32 +167,51 @@
     drawPreview(holdCanvas, held);
   }
 
-  function lockPiece() {
-    if (!active) return;
-    for (let y = 0; y < active.matrix.length; y++) {
-      for (let x = 0; x < active.matrix[y].length; x++) {
-        if (!active.matrix[y][x]) continue;
-        const by = active.y + y;
-        if (by < 0) {
-          gameOver();
-          return;
+  function makeShatterParticles(clearedRows) {
+    const particles = [];
+    for (const row of clearedRows) {
+      for (let x = 0; x < COLS; x++) {
+        const color = COLORS[board[row][x]];
+        for (let i = 0; i < PARTICLES_PER_CELL; i++) {
+          particles.push({
+            x: (x + .2 + Math.random() * .6) * CELL,
+            y: (row + .2 + Math.random() * .6) * CELL,
+            vx: (Math.random() - .5) * 210,
+            vy: -45 - Math.random() * 130,
+            size: 3 + Math.random() * 6,
+            color
+          });
         }
-        board[by][active.x + x] = active.type;
       }
     }
-    let cleared = 0;
-    for (let y = ROWS - 1; y >= 0; y--) {
-      if (board[y].every(Boolean)) {
-        board.splice(y, 1);
-        board.unshift(Array(COLS).fill(null));
-        cleared++;
-        y++;
-      }
-    }
+    return particles;
+  }
 
-    // 대전용 공격 이벤트: 향후 WebSocket 백엔드에서 이 이벤트를 수신합니다.
-    // 상대에게 보낼 방해 줄 수는 서버에서도 재검증해야 합니다.
+  function finishLock(clearedRows) {
+    const cleared = clearedRows.length;
+    settleAnimation = null;
+
     if (cleared) {
+      const clearedSet = new Set(clearedRows);
+      const survivors = [];
+      const offsets = Array(ROWS).fill(0);
+      let rowsBelow = 0;
+
+      // 실제 보드와 애니메이션의 출발 위치를 동일한 행 매핑으로 계산합니다.
+      for (let y = ROWS - 1; y >= 0; y--) {
+        if (clearedSet.has(y)) {
+          rowsBelow++;
+        } else {
+          survivors.unshift(board[y]);
+          offsets[y + rowsBelow] = rowsBelow;
+        }
+      }
+      board = Array.from({ length: cleared }, () => Array(COLS).fill(null)).concat(survivors);
+      if (!reducedMotionQuery.matches) {
+        settleAnimation = { elapsed: 0, offsets };
+      }
+
+      // 대전용 공격 이벤트의 계산/발행 타이밍은 줄 제거가 확정된 시점으로 유지합니다.
       score += [0, 100, 300, 500, 800][cleared] * level;
       lines += cleared;
       level = Math.floor(lines / 10) + 1;
@@ -204,15 +230,48 @@
     updateHUD();
   }
 
+  function lockPiece() {
+    if (!active || clearAnimation) return;
+    for (let y = 0; y < active.matrix.length; y++) {
+      for (let x = 0; x < active.matrix[y].length; x++) {
+        if (!active.matrix[y][x]) continue;
+        const by = active.y + y;
+        if (by < 0) {
+          gameOver();
+          return;
+        }
+        board[by][active.x + x] = active.type;
+      }
+    }
+
+    const clearedRows = [];
+    for (let y = 0; y < ROWS; y++) {
+      if (board[y].every(Boolean)) clearedRows.push(y);
+    }
+
+    if (clearedRows.length && !reducedMotionQuery.matches) {
+      // 줄을 즉시 삭제하지 않고 짧은 플래시 → 파편 연출이 끝난 뒤 확정합니다.
+      clearAnimation = {
+        rows: clearedRows,
+        elapsed: 0,
+        particles: makeShatterParticles(clearedRows)
+      };
+      active = null;
+      elapsed = 0;
+      return;
+    }
+    finishLock(clearedRows);
+  }
+
   function softDrop() {
-    if (!running || paused) return;
+    if (!running || paused || clearAnimation || !active) return;
     if (move(0, 1)) score += 1;
     else lockPiece();
     updateHUD();
   }
 
   function hardDrop() {
-    if (!running || paused) return;
+    if (!running || paused || clearAnimation || !active) return;
     let distance = 0;
     while (move(0, 1)) distance++;
     score += distance * 2;
@@ -220,7 +279,7 @@
   }
 
   function stepDrop() {
-    if (!running || paused) return;
+    if (!running || paused || clearAnimation || !active) return;
     if (!move(0, 1)) lockPiece();
   }
 
@@ -256,6 +315,8 @@
     level = 1;
     attackSent = 0;
     lockCount = 0;
+    clearAnimation = null;
+    settleAnimation = null;
     running = true;
     started = true;
     paused = false;
@@ -270,6 +331,8 @@
   }
 
   function gameOver() {
+    clearAnimation = null;
+    settleAnimation = null;
     running = false;
     paused = false;
     writeBest();
@@ -287,7 +350,7 @@
   }
 
   function action(name) {
-    if (!running || paused) return;
+    if (!running || paused || clearAnimation) return;
     switch (name) {
       case "left": move(-1); break;
       case "right": move(1); break;
@@ -329,6 +392,32 @@
     }
   }
 
+  function drawClearEffect() {
+    if (!clearAnimation) return;
+    const time = clearAnimation.elapsed;
+    if (time < CLEAR_FLASH_MS) {
+      const opacity = .65 - .4 * (time / CLEAR_FLASH_MS);
+      context.fillStyle = "rgba(255,255,255," + opacity + ")";
+      for (const row of clearAnimation.rows) {
+        context.fillRect(0, row * CELL, COLS * CELL, CELL);
+      }
+      return;
+    }
+
+    const progress = Math.min(1, (time - CLEAR_FLASH_MS) / CLEAR_SHATTER_MS);
+    const seconds = (time - CLEAR_FLASH_MS) / 1000;
+    context.save();
+    context.globalAlpha = Math.max(0, 1 - progress);
+    for (const particle of clearAnimation.particles) {
+      const x = particle.x + particle.vx * seconds;
+      const y = particle.y + particle.vy * seconds + 260 * seconds * seconds;
+      const size = particle.size * (1 - .3 * progress);
+      context.fillStyle = particle.color;
+      context.fillRect(x - size / 2, y - size / 2, size, size);
+    }
+    context.restore();
+  }
+
   function draw() {
     context.fillStyle = "#0e1526";
     context.fillRect(0, 0, boardCanvas.width, boardCanvas.height);
@@ -346,11 +435,20 @@
       context.lineTo(COLS * CELL, y * CELL + .5);
       context.stroke();
     }
+    const flashing = clearAnimation && clearAnimation.elapsed < CLEAR_FLASH_MS;
+    const clearSet = clearAnimation ? new Set(clearAnimation.rows) : null;
+    const settleProgress = settleAnimation
+      ? Math.min(1, settleAnimation.elapsed / SETTLE_MS) : 1;
+    const easeOut = 1 - Math.pow(1 - settleProgress, 3);
+
     for (let y = 0; y < ROWS; y++) {
+      if (clearSet && clearSet.has(y) && !flashing) continue;
+      const rowY = settleAnimation ? y - settleAnimation.offsets[y] * (1 - easeOut) : y;
       for (let x = 0; x < COLS; x++) {
-        if (board[y][x]) drawCell(context, x, y, board[y][x], CELL);
+        if (board[y][x]) drawCell(context, x, rowY, board[y][x], CELL);
       }
     }
+    drawClearEffect();
     if (!active) return;
     const ghost = { ...active };
     while (!collides(ghost, 0, 1)) ghost.y++;
@@ -374,16 +472,60 @@
     const delta = Math.min(timestamp - lastTime, 100);
     lastTime = timestamp;
     if (running && !paused) {
-      elapsed += Math.max(0, delta);
-      const interval = Math.max(95, 850 * Math.pow(.86, level - 1));
-      if (elapsed >= interval) {
-        elapsed = 0;
-        stepDrop();
+      const tick = Math.max(0, delta);
+      if (clearAnimation) {
+        clearAnimation.elapsed += tick;
+        if (clearAnimation.elapsed >= CLEAR_FLASH_MS + CLEAR_SHATTER_MS) {
+          const rows = clearAnimation.rows;
+          clearAnimation = null;
+          elapsed = 0;
+          finishLock(rows);
+        }
+      } else {
+        if (settleAnimation) {
+          settleAnimation.elapsed += tick;
+          if (settleAnimation.elapsed >= SETTLE_MS) settleAnimation = null;
+        }
+        elapsed += tick;
+        const interval = Math.max(95, 850 * Math.pow(.86, level - 1));
+        if (elapsed >= interval) {
+          elapsed = 0;
+          stepDrop();
+        }
       }
     }
     draw();
     requestAnimationFrame(loop);
   }
+
+
+  // 세로형 모바일 화면의 실제 가용 높이에 맞춰 보드 크기를 계산합니다.
+  // 10x20 캔버스의 비율은 유지하면서 터치 버튼까지 한 화면에 표시합니다.
+  const mobileGameColumn = document.querySelector(".game-column");
+  const mobileBoardFrame = document.querySelector(".board-frame");
+  const mobileControls = document.querySelector(".controls");
+  const mobileLayoutQuery = window.matchMedia("(max-width: 610px) and (orientation: portrait)");
+
+  function fitMobileBoard() {
+    if (!mobileLayoutQuery.matches) {
+      mobileBoardFrame.style.removeProperty("width");
+      return;
+    }
+    const remainingHeight = mobileGameColumn.clientHeight - mobileControls.offsetHeight - 5;
+    if (remainingHeight <= 0) return;
+    const width = Math.max(1, Math.min(
+      312,
+      mobileGameColumn.clientWidth,
+      Math.floor(remainingHeight / 2)
+    ));
+    mobileBoardFrame.style.width = width + "px";
+  }
+  window.addEventListener("resize", fitMobileBoard);
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", fitMobileBoard);
+  if (typeof ResizeObserver !== "undefined") {
+    new ResizeObserver(fitMobileBoard).observe(mobileGameColumn);
+  }
+  requestAnimationFrame(fitMobileBoard);
 
   // 키보드 조작
   window.addEventListener("keydown", event => {

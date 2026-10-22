@@ -579,6 +579,7 @@
     clearAnimation = null;
     settleAnimation = null;
     updateHUD();
+    orientationAutoPaused = false;
     menuHistory.length = 0;
     showMenu("home");
   }
@@ -601,6 +602,28 @@
     }
   });
   homeButton.addEventListener("click", leaveGame);
+
+  // iOS Safari는 화면 방향 잠금을 보장하지 않아, 가로 회전 시 안내 화면과 자동 일시정지를 사용합니다.
+  const landscapePhoneQuery = window.matchMedia("(orientation: landscape) and (pointer: coarse) and (max-height: 540px)");
+  let orientationAutoPaused = false;
+
+  function syncMobileOrientation() {
+    if (landscapePhoneQuery.matches) {
+      if (!gameView.hidden && running && !paused) {
+        orientationAutoPaused = true;
+        togglePause();
+      }
+    } else if (orientationAutoPaused) {
+      orientationAutoPaused = false;
+      if (!gameView.hidden && running && paused) togglePause();
+    }
+  }
+  if (typeof landscapePhoneQuery.addEventListener === "function") {
+    landscapePhoneQuery.addEventListener("change", syncMobileOrientation);
+  } else if (typeof landscapePhoneQuery.addListener === "function") {
+    landscapePhoneQuery.addListener(syncMobileOrientation);
+  }
+  syncMobileOrientation();
 
   // 키보드 조작
   window.addEventListener("keydown", event => {

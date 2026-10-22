@@ -527,8 +527,107 @@
   }
   requestAnimationFrame(fitMobileBoard);
 
+
+  // 메뉴는 실제 게임과 분리하고, 미구현 온라인 기능은 준비 중임을 명확하게 표시합니다.
+  const appPage = document.querySelector(".page");
+  const menuView = document.getElementById("menu-view");
+  const gameView = document.getElementById("game-view");
+  const homeButton = document.getElementById("home-button");
+  const recordBest = document.getElementById("record-best");
+  const plannedTitle = document.getElementById("planned-title");
+  const plannedDescription = document.getElementById("planned-description");
+  const menuScreens = Array.from(menuView.querySelectorAll("[data-page]"));
+  let menuPage = "home";
+  const menuHistory = [];
+
+  function showMenu(page) {
+    if (!menuScreens.some(screen => screen.dataset.page === page)) return;
+    gameView.hidden = true;
+    menuView.hidden = false;
+    appPage.classList.add("in-menu");
+    for (const screen of menuScreens) {
+      screen.hidden = screen.dataset.page !== page;
+    }
+    menuPage = page;
+    if (page === "records") recordBest.textContent = best.toLocaleString("ko-KR");
+  }
+
+  function navigateMenu(page) {
+    menuHistory.push(menuPage);
+    showMenu(page);
+  }
+
+  function backMenu() {
+    showMenu(menuHistory.pop() || "home");
+  }
+
+  function showGame() {
+    menuView.hidden = true;
+    gameView.hidden = false;
+    appPage.classList.remove("in-menu");
+    menuHistory.length = 0;
+    newGame();
+    requestAnimationFrame(fitMobileBoard);
+  }
+
+  function leaveGame() {
+    if (running && !window.confirm("진행 중인 게임을 종료하고 메인 화면으로 돌아갈까요?")) return;
+    writeBest();
+    running = false;
+    paused = false;
+    active = null;
+    clearAnimation = null;
+    settleAnimation = null;
+    updateHUD();
+    orientationAutoPaused = false;
+    menuHistory.length = 0;
+    showMenu("home");
+  }
+
+  menuView.addEventListener("click", event => {
+    const button = event.target.closest("button");
+    if (!button) return;
+    if (button.hasAttribute("data-back")) {
+      backMenu();
+    } else if (button.dataset.nav) {
+      navigateMenu(button.dataset.nav);
+    } else if (button.dataset.play === "classic") {
+      showGame();
+    } else if (button.dataset.plan) {
+      plannedTitle.textContent = button.dataset.plan;
+      plannedDescription.textContent = button.dataset.plan.includes("랜덤")
+        ? "상대를 자동으로 찾고 3초 카운트다운 후 즉시 시작하는 기능을 준비 중입니다."
+        : "초대 코드로 친구를 모아 준비 완료 후 시작하는 기능을 준비 중입니다.";
+      navigateMenu("planned");
+    }
+  });
+  homeButton.addEventListener("click", leaveGame);
+
+  // iOS Safari는 화면 방향 잠금을 보장하지 않아, 가로 회전 시 안내 화면과 자동 일시정지를 사용합니다.
+  const landscapePhoneQuery = window.matchMedia("(orientation: landscape) and (pointer: coarse) and (max-height: 540px)");
+  let orientationAutoPaused = false;
+
+  function syncMobileOrientation() {
+    if (landscapePhoneQuery.matches) {
+      if (!gameView.hidden && running && !paused) {
+        orientationAutoPaused = true;
+        togglePause();
+      }
+    } else if (orientationAutoPaused) {
+      orientationAutoPaused = false;
+      if (!gameView.hidden && running && paused) togglePause();
+    }
+  }
+  if (typeof landscapePhoneQuery.addEventListener === "function") {
+    landscapePhoneQuery.addEventListener("change", syncMobileOrientation);
+  } else if (typeof landscapePhoneQuery.addListener === "function") {
+    landscapePhoneQuery.addListener(syncMobileOrientation);
+  }
+  syncMobileOrientation();
+
   // 키보드 조작
   window.addEventListener("keydown", event => {
+    if (gameView.hidden) return;
     const tag = document.activeElement?.tagName;
     if (tag === "INPUT" || tag === "TEXTAREA") return;
     const keyMap = {
@@ -589,6 +688,7 @@
   drawPreview(nextCanvas, null);
   drawPreview(holdCanvas, null);
   updateHUD();
-  setOverlay("BLOCK ARENA", "블록을 쌓고 줄을 완성하세요. 대전 모드는 다음 단계에서 연결됩니다.", "혼자 시작하기");
+  showMenu("home");
+  setOverlay("BLOCK ARENA", "블록을 쌓고 줄을 완성하세요.", "혼자 시작하기");
   requestAnimationFrame(timestamp => { lastTime = timestamp; loop(timestamp); });
 })();

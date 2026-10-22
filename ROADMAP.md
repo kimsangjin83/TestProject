@@ -4,11 +4,11 @@
 
 ## 현재 기준선
 
-- **운영 `main`**: 싱글 클래식 게임, PWA, 모바일 세로형 HUD, 줄 제거 파티클·낙하 애니메이션까지 배포 코드 반영 (v0.1 안정화).
-- **테스트 `test`**: 메인 메뉴/싱글/멀티 진입 화면, 기록·설정 기본 UI, 모바일 가로 회전 안내 구현 (v0.2 테스트 중).
+- **운영 `main`**: v0.2까지 반영. 싱글 클래식/PWA, 모바일 HUD, 줄 제거 파편 효과, 메인/싱글/멀티/기록/설정 메뉴 및 모바일 가로 회전 안내 포함.
+- **테스트 `test`**: 현재 v0.2와 동일한 게임 기능을 보유하며 이후 기능 개발/검증 브랜치로 유지. Git 히스토리는 운영의 병합 커밋과 별도로 관리됩니다.
 - **온라인 대전 서버**: 아직 미구현. 방 만들기, 초대코드, 빠른 매칭은 메뉴 흐름만 확인 가능하며 실제 서버 요청은 없음.
 - **저장 데이터**: 브라우저에 싱글 최고 점수만 저장. 온라인 전적·통계는 아직 없음.
-- **관련 PR**: [#2 운영 병합](https://github.com/kimsangjin83/TestProject/pull/2) · [#3 메뉴 개발/테스트](https://github.com/kimsangjin83/TestProject/pull/3)
+- **관련 PR**: [#2 운영 병합](https://github.com/kimsangjin83/TestProject/pull/2) · [#3 v0.2 운영 병합](https://github.com/kimsangjin83/TestProject/pull/3)
 
 ## 상태 정의
 
@@ -29,7 +29,7 @@
 | v0.1 | P0 | 싱글 엔진/PWA 기본 | [#4](https://github.com/kimsangjin83/TestProject/issues/4) | ✅ DONE · main |
 | v0.1 | P0 | 모바일 HUD 및 세로 스크롤 최적화 | [#5](https://github.com/kimsangjin83/TestProject/issues/5) | ✅ DONE · main |
 | v0.1 | P0 | 줄 제거 파괴·낙하 애니메이션 | [#6](https://github.com/kimsangjin83/TestProject/issues/6) | ✅ DONE · main |
-| v0.2 | P0 | 메인/싱글/멀티/기록/설정 메뉴, 가로 안내 | [#7](https://github.com/kimsangjin83/TestProject/issues/7) | 🧪 TESTING · test |
+| v0.2 | P0 | 메인/싱글/멀티/기록/설정 메뉴, 가로 안내 | [#7](https://github.com/kimsangjin83/TestProject/issues/7) | ✅ DONE · main |
 | v0.2 | P1 | test 고정 미리보기 URL/자동 UI 검증 | [#8](https://github.com/kimsangjin83/TestProject/issues/8) | 📋 TODO |
 | v0.3 | P1 | 싱글 기록 확장/게임 결과 화면 | [#9](https://github.com/kimsangjin83/TestProject/issues/9) | 📋 TODO |
 | v0.3 | P2 | 효과음·진동·애니메이션/조작 설정 | [#10](https://github.com/kimsangjin83/TestProject/issues/10) | 📋 TODO |
@@ -49,10 +49,10 @@
 
 ## 다음 작업 우선순위
 
-1. **[#7](https://github.com/kimsangjin83/TestProject/issues/7)**: 메뉴 UI를 실제 아이폰 Safari 및 설치 PWA에서 검증. 승인되면 `test → main` 병합 후 DONE 처리.
-2. **[#8](https://github.com/kimsangjin83/TestProject/issues/8)**: 커밋별 임시 미리보기에서 벗어나 고정된 test URL·자동 E2E 테스트 마련.
-3. **[#9](https://github.com/kimsangjin83/TestProject/issues/9)**: 싱글 통계·게임 종료 결과 화면 개발.
-4. **[#11](https://github.com/kimsangjin83/TestProject/issues/11)** 부터: 서버 기반 1:1 친구 대전 구축 → 공격 → 랜덤 매칭.
+1. **[#8](https://github.com/kimsangjin83/TestProject/issues/8)**: 커밋별 임시 미리보기에서 벗어나 고정된 test URL·자동 E2E 및 실제 모바일 회귀 테스트 마련.
+2. **[#9](https://github.com/kimsangjin83/TestProject/issues/9)**: 싱글 통계·게임 종료 결과 화면 개발.
+3. **[#11](https://github.com/kimsangjin83/TestProject/issues/11)** 부터: 배포 플랫폼 선택 후 서버 기반 1:1 친구 대전 구축 → 공격 → 랜덤 매칭.
+4. **[#10](https://github.com/kimsangjin83/TestProject/issues/10)**: 효과음·진동 및 설정 메뉴 기능 추가.
 
 ## 기술 및 결정 사항
 

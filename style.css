@@ -208,3 +208,105 @@ footer { margin: 18px 0 0; color: #7087a7; font-size: 11px; line-height: 1.65; t
   .actions button { min-height: 36px; }
   .control { min-height: 43px; }
 }
+
+
+/* 메인/게임 화면은 한 번에 하나만 표시합니다. */
+[hidden] { display: none !important; }
+.in-menu > .header, .in-menu > footer { display: none; }
+.menu-view {
+  display: flex;
+  width: min(460px, 100%);
+  margin: 0 auto;
+  min-height: min(690px, calc(100dvh - 55px));
+}
+.menu-screen {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: 17px;
+}
+.menu-hero { text-align: center; padding: 6px 0; }
+.menu-logo {
+  width: clamp(70px, 15vh, 96px); height: auto;
+  border-radius: 23px; padding: 12px;
+  background: #162c4c; border: 1px solid #355985;
+  box-shadow: 0 14px 38px #03081370;
+}
+.menu-kicker { display: block; margin: 10px 0 5px; font-size: 10px; letter-spacing: .25em; color: #77cafa; font-weight: 850; }
+.menu-hero h1 { font-size: clamp(29px, 7vw, 39px); letter-spacing: -.045em; line-height: 1.14; }
+.menu-hero h1 span { color: #79d9f8; }
+.menu-tagline { margin: 7px 0 0; font-size: 13px; color: #9db6d6; }
+.menu-buttons { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+.menu-button {
+  width: 100%; display: flex; align-items: center; gap: 14px;
+  text-align: left; padding: 14px 16px; min-height: 73px;
+  border: 1px solid #344e74; border-radius: 17px;
+  background: linear-gradient(110deg, #1a3050, #13243d); color: #f2f6ff;
+  box-shadow: inset 0 1px 0 #ffffff0b;
+}
+.menu-button.featured { background: linear-gradient(105deg, #2858aa, #1a3975); border-color: #4b88e4; }
+.menu-button > span:nth-child(2) { display: flex; flex-direction: column; min-width: 0; flex: 1; gap: 4px; }
+.menu-button strong { font-size: 17px; font-weight: 800; letter-spacing: -.02em; }
+.menu-button small { font-size: 11px; color: #b4c7e5; line-height: 1.4; }
+.menu-icon {
+  width: 41px; height: 41px; border-radius: 12px;
+  display: grid; place-items: center; flex: none;
+  background: #ffffff12; color: #8bdeff; font-size: 23px; font-weight: 800;
+}
+.menu-arrow { flex: none; font-size: 25px; color: #9cd5fa; }
+.menu-button.unavailable { opacity: .49; box-shadow: none; cursor: default; }
+.menu-badge { font-size: 11px; color: #b5c6df; white-space: nowrap; }
+.menu-version { text-align: center; font-size: 10px; letter-spacing: .12em; color: #7790b3; margin: 0; }
+.menu-heading { text-align: center; }
+.menu-heading .menu-kicker { margin-top: 0; }
+.menu-heading h2 { font-size: clamp(24px, 6vw, 31px); margin: 4px 0 10px; letter-spacing: -.045em; }
+.menu-heading p { font-size: 13px; line-height: 1.6; color: #a9bdd8; margin: 0; }
+.menu-sub .menu-buttons { margin: 6px 0; }
+.menu-tip { margin: 0; font-size: 12px; line-height: 1.6; color: #9db2d1; text-align: center; }
+.menu-back {
+  align-self: center; min-width: 150px; min-height: 46px; margin-top: 4px;
+  padding: 10px 18px; border: 1px solid #395577; border-radius: 12px;
+  background: #152943; color: #e7f2ff; font-weight: 750;
+}
+.menu-notice { padding: 24px 18px; border: 1px solid #35537c; border-radius: 17px; background: #142641; text-align: center; }
+.menu-notice strong { font-size: 16px; }
+.menu-notice p { color: #b1c4e0; font-size: 13px; line-height: 1.7; margin: 12px 0 0; }
+.menu-score { text-align: center; padding: 27px 16px; border: 1px solid #395982; border-radius: 18px; background: #152b4b; }
+.menu-score small { display: block; color: #aabed9; font-size: 13px; }
+.menu-score strong { display: block; font-size: clamp(35px, 10vw, 50px); font-variant-numeric: tabular-nums; margin: 9px 0; color: #8edfff; }
+.menu-score span { display: block; color: #8aa2c4; font-size: 10px; letter-spacing: .14em; }
+
+@media (hover: hover) and (pointer: fine) {
+  button.menu-button:hover:not(:disabled) { border-color: #72bcf6; filter: brightness(1.12); }
+}
+@media (max-width: 610px) and (orientation: portrait) {
+  .menu-view { flex: 1 1 0; min-height: 0; overflow: hidden; }
+  .menu-screen { gap: clamp(10px, 2.2dvh, 17px); }
+  .menu-home { justify-content: space-evenly; }
+  .menu-logo { width: clamp(61px, 12dvh, 85px); padding: 9px; border-radius: 18px; }
+  .menu-hero .menu-kicker { margin: 6px 0 3px; }
+  .menu-hero h1 { font-size: clamp(27px, 7.5vw, 34px); }
+  .menu-tagline { margin-top: 5px; font-size: 12px; }
+  .menu-buttons { gap: 8px; }
+  .menu-button { min-height: 61px; padding: 9px 11px; border-radius: 14px; gap: 11px; }
+  .menu-button strong { font-size: 15px; }
+  .menu-button small { font-size: 10px; }
+  .menu-icon { width: 38px; height: 38px; border-radius: 10px; font-size: 21px; }
+  .menu-arrow { font-size: 22px; }
+  .menu-heading h2 { margin-bottom: 6px; }
+  .menu-notice { padding: 20px 15px; }
+  .actions button { flex: 1 1 0; min-height: 40px; padding: 4px 2px; font-size: 11px; }
+}
+@media (max-width: 610px) and (orientation: portrait) and (max-height: 650px) {
+  .menu-screen { gap: 8px; }
+  .menu-button { min-height: 55px; padding: 6px 9px; }
+  .menu-icon { width: 34px; height: 34px; }
+  .menu-logo { width: 55px; padding: 6px; }
+  .menu-heading p { font-size: 12px; }
+  .menu-version { font-size: 9px; }
+  .menu-back { min-height: 42px; }
+}

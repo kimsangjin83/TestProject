@@ -1,0 +1,21 @@
+{
+  "id": "./",
+  "name": "블록 아레나 - Block Arena",
+  "short_name": "블록 아레나",
+  "description": "혼자 도전하고 친구와 대전을 준비하는 블록 퍼즐 게임",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#090f1e",
+  "theme_color": "#10213d",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

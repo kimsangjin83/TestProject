@@ -3,8 +3,8 @@
 설치형 웹앱(PWA)으로 만드는 실시간 대전 블록 퍼즐 게임 프로토타입.
 
 현재 개발 단계 (2026-10-22):
-- **운영 `main`**: v0.1 싱글 게임 + 모바일 세로형 전체화면 UI + 줄 제거 파괴 효과 운영 반영.
-- **테스트 `test`**: v0.2 메인 메뉴, 싱글/멀티/기록/설정 화면 및 가로 회전 안내 검증 중.
+- **운영 `main`**: v0.2 싱글 게임 + 모바일 전체화면 UI + 블록 파괴 효과 + 메인/싱글/멀티/기록/설정 메뉴 + 가로 회전 안내까지 반영.
+- **테스트 `test`**: v0.2 기능을 포함하고, 이후 신규 기능 개발 및 검증에 사용.
 - **온라인 멀티플레이는 아직 미구현**입니다. 테스트 화면의 대전 메뉴는 흐름을 확인하기 위한 UI입니다.
 
 ## 📋 개발 진행 현황
@@ -12,7 +12,8 @@
 - **[ROADMAP.md — 전체 로드맵 및 상태](./ROADMAP.md)**: 버전별 일정 대신 단계별 목표, 의존성, 완료 기준 관리
 - **[GitHub Issues — 할 일과 완료된 작업](https://github.com/kimsangjin83/TestProject/issues)**: 작업 체크리스트와 실제 진행 상태의 기준
 - **[GitHub Pull Requests](https://github.com/kimsangjin83/TestProject/pulls)**: test 검증 후 main 병합 이력
-- 현재 검증 중: [메인 메뉴 PR #3](https://github.com/kimsangjin83/TestProject/pull/3) · [Issue #7](https://github.com/kimsangjin83/TestProject/issues/7)
+- 최근 운영 반영: [메인 메뉴 PR #3](https://github.com/kimsangjin83/TestProject/pull/3) · [완료 Issue #7](https://github.com/kimsangjin83/TestProject/issues/7)
+- 다음 검증 과제: [테스트 전용 배포 및 E2E Issue #8](https://github.com/kimsangjin83/TestProject/issues/8)
 
 > 개발 규칙: `test`에서 구현·테스트 → 실제 모바일 확인 및 승인 → `main` 병합 → Issue 완료 처리. 버전 목표는 확정 출시일이 아닙니다.
 
@@ -33,6 +34,8 @@ https://kimsangjin83.github.io/TestProject/
 - 오프라인 캐싱 및 설치형 웹앱(PWA) 기본 구성
 - 모바일 세로형 스크롤 최소화 HUD·게임판 자동 크기 조절
 - 줄 제거 플래시·파편·블록 낙하 애니메이션
+- 메인/싱글/멀티/기록/설정 메뉴와 화면 전환(멀티 기능은 UI만 제공)
+- 휴대폰 가로 화면 전환 시 세로 회전 안내 및 일시정지
 - 방해 줄 공격량 계산과 `blockarena:attack` 브라우저 이벤트 (서버 전송은 아직 하지 않음)
 
 ### 조작
@@ -96,7 +99,7 @@ iPhone / Android / PC 브라우저
 ### 릴리스 진행 요약
 
 1. **✅ v0.1 운영**: 싱글플레이, PWA, 모바일 UI, 줄 제거 파괴 효과
-2. **🧪 v0.2 테스트**: 메인 메뉴/화면 전환, 가로 회전 안내 (테스트 후 운영 반영)
+2. **✅ v0.2 운영**: 메인 메뉴/화면 전환, 가로 회전 안내 (PR #3 병합)
 3. **📋 v0.3 예정**: 싱글 기록 확장/설정 기능
 4. **📋 v0.4 예정**: 1:1 친구 방·WebSocket·공격 시스템
 5. **📋 v0.5 이후 예정**: 랜덤 자동 매칭, 4인 개인전, 2:2 팀전, 전적 및 랭킹

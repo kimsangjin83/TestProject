@@ -1,5 +1,5 @@
-const CACHE = "block-arena-v1";
-const ASSETS = ["./", "./index.html", "./game.js", "./style.css", "./icon.svg", "./manifest.webmanifest"];
+const CACHE = "block-arena-v2";
+const ASSETS = ["./", "./index.html", "./game.js", "./style.css", "./icon.svg", "./icon-192.png", "./manifest.webmanifest"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });

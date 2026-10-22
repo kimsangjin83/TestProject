@@ -310,3 +310,20 @@ footer { margin: 18px 0 0; color: #7087a7; font-size: 11px; line-height: 1.65; t
   .menu-version { font-size: 9px; }
   .menu-back { min-height: 42px; }
 }
+
+/* 모바일 가로 화면에서는 플레이 화면을 숨기고 세로 회전을 안내합니다. */
+.rotate-notice { display: none; }
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 540px) {
+  html, body { width: 100%; height: 100%; overflow: hidden !important; overscroll-behavior: none; }
+  .page { display: none !important; }
+  .rotate-notice {
+    display: flex; box-sizing: border-box; width: 100%; height: 100vh; height: 100dvh;
+    flex-direction: column; justify-content: center; align-items: center;
+    gap: 12px; padding: max(16px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right))
+      max(16px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+    text-align: center;
+  }
+  .rotate-symbol { transform: rotate(-90deg); font-size: 64px; line-height: 1; color: #79d9f8; }
+  .rotate-notice h2 { margin: 0; font-size: 24px; }
+  .rotate-notice p { margin: 0; font-size: 13px; color: #aac3df; line-height: 1.6; }
+}

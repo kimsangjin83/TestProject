@@ -385,6 +385,35 @@
     requestAnimationFrame(loop);
   }
 
+
+  // 세로형 모바일 화면의 실제 가용 높이에 맞춰 보드 크기를 계산합니다.
+  // 10x20 캔버스의 비율은 유지하면서 터치 버튼까지 한 화면에 표시합니다.
+  const mobileGameColumn = document.querySelector(".game-column");
+  const mobileBoardFrame = document.querySelector(".board-frame");
+  const mobileControls = document.querySelector(".controls");
+  const mobileLayoutQuery = window.matchMedia("(max-width: 610px) and (orientation: portrait)");
+
+  function fitMobileBoard() {
+    if (!mobileLayoutQuery.matches) {
+      mobileBoardFrame.style.removeProperty("width");
+      return;
+    }
+    const remainingHeight = mobileGameColumn.clientHeight - mobileControls.offsetHeight - 5;
+    if (remainingHeight <= 0) return;
+    const width = Math.max(1, Math.min(
+      312,
+      mobileGameColumn.clientWidth,
+      Math.floor(remainingHeight / 2)
+    ));
+    mobileBoardFrame.style.width = width + "px";
+  }
+  window.addEventListener("resize", fitMobileBoard);
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", fitMobileBoard);
+  if (typeof ResizeObserver !== "undefined") {
+    new ResizeObserver(fitMobileBoard).observe(mobileGameColumn);
+  }
+  requestAnimationFrame(fitMobileBoard);
+
   // 키보드 조작
   window.addEventListener("keydown", event => {
     const tag = document.activeElement?.tagName;

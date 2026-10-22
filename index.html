@@ -3,220 +3,100 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101828">
-  <meta name="description" content="브라우저에서 바로 사용할 수 있는 간단한 할 일 관리 웹 앱">
-  <title>오늘의 할 일 | TestProject</title>
-  <style>
-    :root {
-      font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: #182230;
-      background: #f5f7fb;
-      font-synthesis: none;
-    }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; }
-    button, input { font: inherit; }
-    button { cursor: pointer; }
-    .hero {
-      background: linear-gradient(120deg, #101828 0%, #243b62 100%);
-      color: white;
-      padding: 64px 24px 110px;
-      text-align: center;
-    }
-    .eyebrow {
-      display: inline-block;
-      padding: 7px 14px;
-      border: 1px solid #ffffff44;
-      border-radius: 999px;
-      color: #c7d7fc;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: .12em;
-    }
-    h1 { margin: 18px 0 10px; font-size: clamp(30px, 5vw, 44px); letter-spacing: -.04em; }
-    .hero p { margin: 0; color: #d2ddf0; font-size: 15px; }
-    main { width: min(720px, calc(100% - 32px)); margin: -66px auto 48px; position: relative; }
-    .card {
-      background: #fff;
-      border: 1px solid #e8edf4;
-      border-radius: 22px;
-      box-shadow: 0 18px 55px #142d5120;
-      padding: 28px;
-    }
-    .summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
-    .summary h2 { margin: 0; font-size: 20px; letter-spacing: -.04em; }
-    .summary p { margin: 5px 0 0; font-size: 13px; color: #667085; }
-    .badge { background: #eef4ff; color: #335cc5; padding: 8px 12px; border-radius: 11px; font-weight: 750; white-space: nowrap; }
-    .progress-track { height: 8px; border-radius: 999px; background: #edf1f6; overflow: hidden; margin-bottom: 24px; }
-    .progress-bar { height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #4a78ef, #42c6ae); transition: width .25s ease; }
-    .task-form { display: flex; gap: 10px; }
-    .task-form input {
-      flex: 1; min-width: 0; border: 1px solid #d8e0eb; border-radius: 12px;
-      padding: 14px 15px; background: #fff; outline: none;
-    }
-    .task-form input:focus { border-color: #4a78ef; box-shadow: 0 0 0 3px #4a78ef22; }
-    .primary {
-      border: 0; border-radius: 12px; padding: 0 21px; background: #3568e8;
-      color: white; font-weight: 700; transition: background .2s;
-    }
-    .primary:hover { background: #254fc4; }
-    .filters { display: flex; gap: 8px; margin: 24px 0 11px; flex-wrap: wrap; }
-    .filter {
-      border: 1px solid transparent; background: transparent; color: #667085;
-      padding: 9px 13px; border-radius: 10px; font-size: 13px; font-weight: 650;
-    }
-    .filter[aria-pressed="true"] { color: #2c5fdb; background: #eef4ff; }
-    ul { margin: 0; padding: 0; list-style: none; }
-    .task {
-      display: flex; align-items: center; gap: 12px;
-      padding: 16px 4px; border-bottom: 1px solid #eef1f6;
-    }
-    .task:last-child { border-bottom: 0; }
-    .task input[type="checkbox"] { accent-color: #3568e8; width: 19px; height: 19px; cursor: pointer; }
-    .task label { flex: 1; min-width: 0; overflow-wrap: anywhere; line-height: 1.5; cursor: pointer; }
-    .task.completed label { color: #98a2b3; text-decoration: line-through; }
-    .remove { border: 0; background: #fff0f0; color: #c13d48; padding: 7px 10px; border-radius: 8px; font-size: 12px; }
-    .remove:hover { background: #ffe3e3; }
-    .empty { text-align: center; color: #98a2b3; padding: 42px 12px; line-height: 1.6; }
-    footer { text-align: center; color: #98a2b3; font-size: 12px; margin-top: 22px; }
-    @media (max-width: 480px) {
-      .hero { padding: 48px 18px 98px; }
-      .card { padding: 20px 16px; border-radius: 18px; }
-      .task-form { gap: 7px; }
-      .task-form input { padding: 12px; }
-      .primary { padding: 0 15px; }
-    }
-  </style>
+  <meta name="theme-color" content="#10213d">
+  <meta name="description" content="블록 아레나 - 설치해서 즐기는 블록 퍼즐 게임">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="블록 아레나">
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./style.css">
+  <title>블록 아레나 | Block Arena</title>
+  <script defer src="./game.js"></script>
 </head>
 <body>
-  <header class="hero">
-    <span class="eyebrow">TEST PROJECT · WEB DEMO</span>
-    <h1>오늘의 할 일 ✨</h1>
-    <p>작은 계획부터 하나씩, 오늘도 차근차근.</p>
-  </header>
+  <main class="page">
+    <header class="header">
+      <div class="brand">
+        <img class="brand-icon" src="./icon.svg" alt="">
+        <div><p class="eyebrow">PUZZLE BATTLE</p><h1>블록 아레나</h1></div>
+      </div>
+      <span class="header-pill">PWA · SOLO PREVIEW</span>
+    </header>
 
-  <main>
-    <section class="card" aria-label="할 일 관리">
-      <div class="summary">
-        <div>
-          <h2>나의 체크리스트</h2>
-          <p id="summary-text" aria-live="polite">할 일을 불러오는 중...</p>
-        </div>
-        <span class="badge" id="percentage">0%</span>
+    <p class="intro">줄을 완성해 블록을 제거하세요. 나중에는 제거한 줄로 상대의 보드를 공격하는 실시간 대전도 추가할 예정입니다.</p>
+
+    <nav class="modes" aria-label="게임 모드">
+      <button class="mode active" type="button" aria-current="page">혼자 플레이</button>
+      <button class="mode" type="button" disabled title="온라인 대전 서버 준비 중">1:1 · 준비 중</button>
+      <button class="mode" type="button" disabled title="온라인 대전 서버 준비 중">2:2 · 준비 중</button>
+      <button class="mode" type="button" disabled title="온라인 대전 서버 준비 중">4인 개인전 · 준비 중</button>
+    </nav>
+
+    <section class="card" aria-label="블록 게임">
+      <div class="arena">
+        <section class="game-column" aria-label="게임 보드">
+          <div class="board-frame">
+            <canvas id="board" width="300" height="600" role="img" aria-label="10열 20행 블록 퍼즐 보드"></canvas>
+            <div class="overlay" id="overlay" role="region" aria-label="게임 시작 및 정지 안내">
+              <h2 id="overlay-title">BLOCK ARENA</h2>
+              <p id="overlay-text">혼자 플레이할 수 있습니다.</p>
+              <button class="primary" type="button" id="overlay-button">혼자 시작하기</button>
+            </div>
+          </div>
+          <div class="controls" aria-label="터치 게임 조작">
+            <button class="control" type="button" data-action="left" aria-label="왼쪽으로 이동">◀</button>
+            <button class="control" type="button" data-action="rotate" aria-label="회전">⟳</button>
+            <button class="control" type="button" data-action="right" aria-label="오른쪽으로 이동">▶</button>
+            <button class="control small" type="button" data-action="hold" aria-label="블록 보관">보관</button>
+            <button class="control" type="button" data-action="down" aria-label="한 칸 아래로 이동">▼</button>
+            <button class="control drop small" type="button" data-action="drop" aria-label="맨 아래로 내리기">바로 내리기 ⤓</button>
+          </div>
+        </section>
+
+        <aside class="stats-panel" aria-label="게임 정보">
+          <div class="kpi-grid">
+            <div class="kpi"><span class="label">점수</span><strong class="value" id="score">0</strong></div>
+            <div class="kpi"><span class="label">최고 점수</span><strong class="value" id="best">0</strong></div>
+            <div class="kpi"><span class="label">제거한 줄</span><strong class="value" id="lines">0</strong></div>
+            <div class="kpi"><span class="label">레벨</span><strong class="value" id="level">1</strong></div>
+          </div>
+          <div class="preview-grid">
+            <div class="preview-box"><span>다음 블록</span><canvas id="next" width="96" height="96" aria-label="다음 블록 미리보기"></canvas></div>
+            <div class="preview-box"><span>보관 블록</span><canvas id="hold" width="96" height="96" aria-label="보관한 블록 미리보기"></canvas></div>
+          </div>
+          <div class="kpi">
+            <span class="label">대전 공격 연습 · 누적 방해 줄</span>
+            <strong class="value" id="attack">0</strong>
+            <div class="progress-track"><div class="progress-bar" id="progress"></div></div>
+          </div>
+          <p class="status-text" id="game-status" role="status" aria-live="polite">시작할 준비가 됐어요</p>
+          <div class="actions">
+            <button type="button" id="start-button">다시 시작</button>
+            <button type="button" id="pause-button" disabled>일시정지</button>
+          </div>
+          <div class="rules">
+            <h3>플레이 방법</h3>
+            <p>← → 이동 · ↑ 회전 · ↓ 한 칸 내리기<br>
+               Space 즉시 내리기 · C 보관 · P 일시정지<br>
+               Z 반대 방향 회전<br><br>
+               2줄 제거 → 1줄 공격, 3줄 → 2줄, 4줄 → 4줄 공격. 현재는 공격량만 표시해요.</p>
+          </div>
+        </aside>
       </div>
-      <div class="progress-track" role="progressbar" aria-label="할 일 완료율" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress">
-        <div class="progress-bar" id="progress-bar"></div>
-      </div>
-      <form class="task-form" id="task-form">
-        <input id="task-input" type="text" maxlength="120" placeholder="새로운 할 일을 입력하세요" aria-label="새로운 할 일" required autocomplete="off">
-        <button class="primary" type="submit">+ 추가</button>
-      </form>
-      <nav class="filters" aria-label="할 일 필터">
-        <button class="filter" type="button" data-filter="all" aria-pressed="true">전체</button>
-        <button class="filter" type="button" data-filter="active" aria-pressed="false">진행 중</button>
-        <button class="filter" type="button" data-filter="done" aria-pressed="false">완료</button>
-      </nav>
-      <ul id="task-list" aria-label="할 일 목록"></ul>
-      <p id="empty-message" class="empty" hidden>표시할 할 일이 없어요.<br>새로운 할 일을 추가해 보세요!</p>
+      <p class="note">📱 아이폰 Safari에서 '공유 → 홈 화면에 추가'로 앱처럼 실행할 수 있어요.</p>
     </section>
-    <footer>데이터는 이 브라우저에만 저장됩니다 · No backend required</footer>
+    <footer>Block Arena는 독립 제작 블록 퍼즐 프로토타입입니다. 현재 멀티플레이는 구현 전이며, 데이터는 브라우저에만 저장됩니다.</footer>
   </main>
 
   <script>
-    (function () {
-      "use strict";
-      var STORAGE_KEY = "testproject.tasks.v1";
-      var initialTasks = [
-        { id: "sample-1", title: "GitHub 저장소 연결 확인하기", done: true },
-        { id: "sample-2", title: "첫 번째 웹 화면 실행하기", done: false },
-        { id: "sample-3", title: "새로운 할 일 추가해 보기", done: false }
-      ];
-      var tasks;
-      try {
-        var stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        tasks = Array.isArray(stored) ? stored : initialTasks;
-      } catch (e) { tasks = initialTasks; }
-      var filter = "all";
-      var list = document.getElementById("task-list");
-      var empty = document.getElementById("empty-message");
-      var input = document.getElementById("task-input");
-
-      function save() {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }
-        catch (e) { console.warn("로컬 저장소에 저장하지 못했습니다.", e); }
-      }
-
-      function render() {
-        var completed = tasks.filter(function (task) { return task.done; }).length;
-        var percent = tasks.length ? Math.round(completed / tasks.length * 100) : 0;
-        document.getElementById("summary-text").textContent = tasks.length + "개 중 " + completed + "개 완료";
-        document.getElementById("percentage").textContent = percent + "%";
-        document.getElementById("progress-bar").style.width = percent + "%";
-        document.getElementById("progress").setAttribute("aria-valuenow", String(percent));
-
-        list.replaceChildren();
-        var visible = tasks.filter(function (task) {
-          return filter === "all" || (filter === "active" && !task.done) || (filter === "done" && task.done);
-        });
-        empty.hidden = visible.length !== 0;
-
-        visible.forEach(function (task) {
-          var item = document.createElement("li");
-          item.className = "task" + (task.done ? " completed" : "");
-
-          var checkbox = document.createElement("input");
-          checkbox.type = "checkbox";
-          checkbox.checked = task.done;
-          checkbox.id = "task-" + task.id;
-          checkbox.addEventListener("change", function () {
-            task.done = checkbox.checked;
-            save();
-            render();
-          });
-
-          var label = document.createElement("label");
-          label.htmlFor = checkbox.id;
-          label.textContent = task.title;
-
-          var remove = document.createElement("button");
-          remove.type = "button";
-          remove.className = "remove";
-          remove.textContent = "삭제";
-          remove.setAttribute("aria-label", task.title + " 삭제");
-          remove.addEventListener("click", function () {
-            tasks = tasks.filter(function (candidate) { return candidate.id !== task.id; });
-            save();
-            render();
-          });
-
-          item.append(checkbox, label, remove);
-          list.appendChild(item);
-        });
-      }
-
-      document.getElementById("task-form").addEventListener("submit", function (event) {
-        event.preventDefault();
-        var title = input.value.trim();
-        if (!title) return;
-        tasks.unshift({ id: String(Date.now()) + "-" + Math.random().toString(36).slice(2), title: title, done: false });
-        input.value = "";
-        save();
-        render();
-        input.focus();
-      });
-
-      document.querySelectorAll("[data-filter]").forEach(function (button) {
-        button.addEventListener("click", function () {
-          filter = button.dataset.filter;
-          document.querySelectorAll("[data-filter]").forEach(function (other) {
-            other.setAttribute("aria-pressed", String(other === button));
-          });
-          render();
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("./service-worker.js").catch(function (err) {
+          console.warn("오프라인 기능을 사용할 수 없습니다:", err);
         });
       });
-
-      render();
-    })();
+    }
   </script>
 </body>
 </html>

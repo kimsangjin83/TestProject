@@ -12,7 +12,7 @@
 
 ## 기술 방향 결정: AWS 우선 검토 (계정·비용 확인 대기)
 
-**2026-10-22 합의한 기본 방향**: 블럭아레나 정식 운영까지 고려해 Cloudflare 서버리스 대신 **AWS Linux 기반 서버 + Java/Spring Boot**를 우선 검토한다. 다만 사용자가 AWS 계정 상태·무료 혜택을 확인 중이므로 인스턴스 유형과 월 예산은 아직 확정하지 않았다. 현재 AWS 리소스는 생성하지 않았다.
+**2026-10-22 합의한 기본 방향**: 블럭아레나 정식 운영까지 고려해 Cloudflare 서버리스 대신 **AWS Linux 기반 서버 + Java/Spring Boot**를 우선 검토한다. **2026-10-22 현재 신규 AWS Free 계정과 가입 크레딧 US$100를 확인했으며, AWS 화면에 남은 184일·2027-04-22 무료 플랜 종료로 표시됨.** 콘솔 리전은 현재 시드니로 표시되므로 서버 구축 전 서울(`ap-northeast-2`)로 전환 예정. 인스턴스·월 예산은 미확정이며 **AWS 리소스는 아직 생성하지 않았다**.
 
 ```text
 GitHub (현재 Public, AWS 전환/배포 검증 후 Private 검토)
@@ -57,7 +57,7 @@ GitHub (현재 Public, AWS 전환/배포 검증 후 Private 검토)
 | v0.1 | P0 | 모바일 HUD 및 세로 스크롤 최적화 | [#5](https://github.com/kimsangjin83/TestProject/issues/5) | ✅ DONE · main |
 | v0.1 | P0 | 줄 제거 파괴·낙하 애니메이션 | [#6](https://github.com/kimsangjin83/TestProject/issues/6) | ✅ DONE · main |
 | v0.2 | P0 | 메인/싱글/멀티/기록/설정 메뉴, 가로 안내 | [#7](https://github.com/kimsangjin83/TestProject/issues/7) | ✅ DONE · main |
-| AWS 준비 | P0 | AWS 계정 무료 혜택/비용/사양 확인 | [#22](https://github.com/kimsangjin83/TestProject/issues/22) | 📋 TODO · 사용자 확인 중 |
+| AWS 준비 | P0 | AWS 신규 Free 계정 확인 완료 · 서버 비용/사양 결정 | [#22](https://github.com/kimsangjin83/TestProject/issues/22) | 🔨 IN PROGRESS |
 | AWS 준비 | P0 | AWS 프론트 이전 및 GitHub Private 전환 | [#23](https://github.com/kimsangjin83/TestProject/issues/23) | 📋 TODO |
 | v0.3 | P1 | AWS test/운영 배포 분리 및 UI 검증 | [#8](https://github.com/kimsangjin83/TestProject/issues/8) | 📋 TODO |
 | v0.3 | P1 | 싱글 기록 확장/게임 결과 화면 | [#9](https://github.com/kimsangjin83/TestProject/issues/9) | 📋 TODO |
@@ -78,7 +78,7 @@ GitHub (현재 Public, AWS 전환/배포 검증 후 Private 검토)
 
 ## 다음 작업 우선순위
 
-1. **사용자 확인 ([#22](https://github.com/kimsangjin83/TestProject/issues/22))**: AWS 계정, 무료 플랜/크레딧/만료일, 원하는 월 예산 확인. 계정 정보나 비밀번호는 저장소에 올리지 않는다.
+1. **[#22](https://github.com/kimsangjin83/TestProject/issues/22) 진행 중**: 신규 Free 계정·US$100 크레딧·2027-04-22 종료일 확인 완료. 서울 리전 변경, EC2/Lightsail 비교, 월 예산·비용 경보 설정이 남아 있음. 계정 비밀번호/액세스 키/계정 ID는 저장소에 올리지 않는다.
 2. **설계 ([#22](https://github.com/kimsangjin83/TestProject/issues/22))**: 서울 리전 EC2 vs Lightsail, 최소 메모리 사양, EBS/IPv4/전송량 비용 비교 및 예산 알림 계획.
 3. **배포 전환 ([#23](https://github.com/kimsangjin83/TestProject/issues/23), [#8](https://github.com/kimsangjin83/TestProject/issues/8))**: 운영/테스트 분리, HTTPS/PWA 검증, GitHub Private 전환. 기존 Pages는 대체 경로 확인 시까지 유지.
 4. **백엔드 ([#11](https://github.com/kimsangjin83/TestProject/issues/11))**: Spring Boot REST/WebSocket 뼈대 → 1:1 친구 게임룸 ([#12](https://github.com/kimsangjin83/TestProject/issues/12)) → 동기화/공격 ([#13](https://github.com/kimsangjin83/TestProject/issues/13), [#14](https://github.com/kimsangjin83/TestProject/issues/14)).

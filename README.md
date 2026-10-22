@@ -13,7 +13,7 @@
 - **[GitHub Issues — 할 일과 완료된 작업](https://github.com/kimsangjin83/TestProject/issues)**: 작업 체크리스트와 실제 진행 상태의 기준
 - **[GitHub Pull Requests](https://github.com/kimsangjin83/TestProject/pulls)**: test 검증 후 main 병합 이력
 - 최근 운영 반영: [메인 메뉴 PR #3](https://github.com/kimsangjin83/TestProject/pull/3) · [완료 Issue #7](https://github.com/kimsangjin83/TestProject/issues/7)
-- 다음 검증 과제: [테스트 전용 배포 및 E2E Issue #8](https://github.com/kimsangjin83/TestProject/issues/8)
+- 다음 인프라 작업: [AWS 계정/비용 Issue #22](https://github.com/kimsangjin83/TestProject/issues/22), [AWS 프론트 배포/Private 전환 Issue #23](https://github.com/kimsangjin83/TestProject/issues/23), [배포 테스트 Issue #8](https://github.com/kimsangjin83/TestProject/issues/8)
 
 > 개발 규칙: `test`에서 구현·테스트 → 실제 모바일 확인 및 승인 → `main` 병합 → Issue 완료 처리. 버전 목표는 확정 출시일이 아닙니다.
 
@@ -71,38 +71,40 @@ https://kimsangjin83.github.io/TestProject/
 
 현재 게임 내 '누적 방해 줄' 숫자는 **연습용 계산만** 하며 다른 사용자에게 전송되지는 않습니다.
 
-## 무료 운영 아키텍처 (계획)
+## 향후 AWS 운영 아키텍처 (계정·무료 자격 확인 대기)
+
+현재 게임은 GitHub Pages에 배포 중이며 **AWS 환경으로 아직 이전하지 않았습니다**. 운영 환경은 사용자 AWS 계정/무료 혜택 확인 후 결정합니다.
 
 ```text
-iPhone / Android / PC 브라우저
-    │
-    ├── GitHub Pages: 정적 PWA / 게임 렌더링
-    │
-    └── Cloudflare Workers + Durable Objects: 대전 방 WebSocket
-            ├── 방 생성 / 초대 코드
-            ├── 준비 상태 / 매치 시작
-            ├── 게임 이벤트 중계, 점수/생존 상태
-            └── 공격 및 승패 판정
+GitHub (main 운영 / test 개발·검증; 현재 Public)
+  │
+  └─ AWS Linux (EC2 또는 Lightsail, 비용 확인 후 결정)
+      ├─ Nginx: HTML/CSS/JS PWA + HTTPS/Reverse Proxy
+      └─ Spring Boot 3.x / Java 17+ : REST API · WebSocket
+          ├─ 방 생성/초대·READY
+          ├─ 매칭
+          ├─ 서버 기준 게임 상태/공격/승패 검증
+          └─ DB: 전적 저장 필요 시 도입
 ```
 
-- **프론트엔드**: GitHub Pages (현재 사용 중, 무료)
-- **온라인 대전**: Cloudflare Workers + SQLite 기반 Durable Objects (무료 할당량 내)
-- **DB**: 초기에 불필요. 추후 계정·전적 저장이 필요하면 추가
-- **AWS와 Spring Boot**: 트래픽 증가나 별도 기능이 필요할 때 검토
+- 1단계: [#22 AWS 계정·무료 혜택·월 비용 확인](https://github.com/kimsangjin83/TestProject/issues/22). 실제 서버 개설/과금은 아직 하지 않음.
+- 2단계: [#23 AWS 프론트 배포 및 GitHub Private 전환](https://github.com/kimsangjin83/TestProject/issues/23). 새 운영/테스트 주소 검증 후에만 GitHub Pages 의존성 제거.
+- 3단계: [#11 Spring Boot WebSocket 게임룸](https://github.com/kimsangjin83/TestProject/issues/11) → 1:1 친구 대전 → 공격 → 랜덤 매칭.
+- 최소 서버 검증에는 DB를 반드시 설치할 필요는 없음. 랭킹/계정이 필요하면 MariaDB 등 검토.
+- GitHub Private으로 바꿔도 **브라우저에 내려가는 JavaScript는 노출됨**. 대전 데이터는 서버에서 검증해야 함.
+- AWS 사용량은 서비스·리전·계정 혜택·퍼블릭 IPv4·EBS·전송량에 따라 과금될 수 있음.
 
-공식 문서:
-- https://developers.cloudflare.com/durable-objects/best-practices/websockets/
-- https://developers.cloudflare.com/durable-objects/platform/pricing/
-
-> WebSocket도 요청량에 포함되므로 프레임(60fps)을 서버로 매번 보내지 않고, 이동/고정/공격/패배 등 의미 있는 이벤트와 제한된 주기로 상태를 동기화합니다.
+### 이전 배포 계획 변경
+Cloudflare Workers/Durable Objects 방식 대신 AWS + Spring Boot를 **우선 검토**하기로 했음. AWS 계정/예산 상태 확인에 따라 최종 사양 확정 예정.
 
 ### 릴리스 진행 요약
 
 1. **✅ v0.1 운영**: 싱글플레이, PWA, 모바일 UI, 줄 제거 파괴 효과
 2. **✅ v0.2 운영**: 메인 메뉴/화면 전환, 가로 회전 안내 (PR #3 병합)
-3. **📋 v0.3 예정**: 싱글 기록 확장/설정 기능
-4. **📋 v0.4 예정**: 1:1 친구 방·WebSocket·공격 시스템
-5. **📋 v0.5 이후 예정**: 랜덤 자동 매칭, 4인 개인전, 2:2 팀전, 전적 및 랭킹
+3. **📋 AWS 환경 준비**: 계정·무료 자격 확인 → 프론트 AWS 이전·GitHub Private 전환 → Spring Boot 서버 개발
+4. **📋 v0.3 예정**: 싱글 기록 확장/설정 기능
+5. **📋 v0.4 예정**: 1:1 친구 방·WebSocket·공격 시스템
+6. **📋 v0.5 이후 예정**: 랜덤 자동 매칭, 4인 개인전, 2:2 팀전, 전적 및 랭킹
 
 세부 Issue 링크와 완료 기준은 [ROADMAP.md](./ROADMAP.md)에서 관리합니다.
 

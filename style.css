@@ -104,3 +104,107 @@ footer { margin: 18px 0 0; color: #7087a7; font-size: 11px; line-height: 1.65; t
   .rules { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+
+
+/* 모바일에서는 문서가 아니라 한 화면 안에서 끝나는 게임 UI로 배치합니다. */
+@media (max-width: 610px) and (orientation: portrait) {
+  html, body { height: 100%; overflow: hidden; }
+  body { overscroll-behavior: none; }
+  .page {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: max(7px, env(safe-area-inset-top)) 8px max(7px, env(safe-area-inset-bottom));
+  }
+  .header { flex: none; min-height: 32px; margin: 0 0 5px; }
+  .brand { gap: 7px; }
+  .brand-icon { width: 32px; height: 32px; padding: 4px; border-radius: 8px; }
+  .eyebrow { font-size: 8px; letter-spacing: .16em; margin: 0; }
+  h1 { font-size: 19px; }
+  .intro, .modes, .note, footer { display: none; }
+
+  .card {
+    display: flex;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .arena {
+    flex: 1 1 0;
+    min-height: 0;
+    min-width: 0;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* 점수와 NEXT / HOLD는 게임 상단의 작은 HUD에 모읍니다. */
+  .stats-panel {
+    order: -1;
+    flex: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 5px;
+    width: 100%;
+    max-width: 390px;
+    align-items: center;
+  }
+  .kpi-grid { grid-column: 1; grid-row: 1; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+  .kpi { padding: 5px 2px; border-radius: 8px; }
+  .kpi .label { margin: 0 0 2px; font-size: 9px; }
+  .kpi .value { font-size: 14px; line-height: 1.3; }
+  .preview-grid { grid-column: 2; grid-row: 1; gap: 3px; }
+  .preview-box { width: 46px; padding: 3px 2px; border-radius: 8px; }
+  .preview-box span { font-size: 9px; margin-bottom: 0; }
+  .preview-box canvas { max-width: 34px; }
+  .stats-panel > .kpi, .status-text, .rules { display: none; }
+  .actions { grid-column: 1 / -1; grid-row: 2; justify-content: center; gap: 6px; }
+  .actions button { flex: 0 1 145px; min-height: 40px; padding: 5px; font-size: 12px; }
+
+  .game-column {
+    flex: 1 1 0;
+    min-height: 0;
+    width: 100%;
+    max-width: 390px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+  }
+  .board-frame {
+    flex: none;
+    width: min(100%, 300px);
+    max-width: 100%;
+    margin: 0;
+    border-width: 3px;
+    border-radius: 9px;
+    touch-action: none;
+  }
+  #board { width: 100%; height: auto; touch-action: none; }
+  .controls { flex: none; width: 100%; margin: 0; gap: 5px; }
+  .control { min-height: 46px; border-radius: 9px; touch-action: none; }
+  .overlay { padding: 12px; gap: 9px; }
+  .overlay h2 { font-size: 23px; }
+  .overlay p { font-size: 12px; line-height: 1.4; }
+}
+
+@media (max-width: 610px) and (orientation: portrait) and (max-height: 700px) {
+  .header { margin-bottom: 3px; }
+  .stats-panel { gap: 3px; }
+  .kpi .label { font-size: 8px; }
+  .preview-box { width: 41px; }
+  .preview-box canvas { max-width: 28px; }
+  .actions button { min-height: 36px; }
+  .control { min-height: 43px; }
+}

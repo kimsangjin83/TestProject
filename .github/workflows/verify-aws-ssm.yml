@@ -25,6 +25,23 @@ jobs:
     timeout-minutes: 10
 
     steps:
+      - name: Inspect public OIDC claim values for diagnostics
+        shell: bash
+        run: |
+          node <<'NODE'
+          (async () => {
+            const endpoint = process.env.ACTIONS_ID_TOKEN_REQUEST_URL + '&audience=sts.amazonaws.com';
+            const response = await fetch(endpoint, {
+              headers: { Authorization: 'Bearer ' + process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }
+            });
+            if (!response.ok) throw new Error('Unable to request OIDC token: HTTP ' + response.status);
+            const result = await response.json();
+            const payload = JSON.parse(Buffer.from(result.value.split('.')[1], 'base64url').toString('utf8'));
+            // Never log the actual token; these are nonsecret routing claims only.
+            console.log(JSON.stringify({ issuer: payload.iss, audience: payload.aud, subject: payload.sub }, null, 2));
+          })().catch(error => { console.error(error.message); process.exit(1); });
+          NODE
+
       - name: Assume AWS deploy role with GitHub OIDC
         uses: aws-actions/configure-aws-credentials@v6.3.0
         with:

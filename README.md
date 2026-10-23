@@ -7,6 +7,19 @@
 - **테스트 `test`**: v0.2 기능을 포함하고, 이후 신규 기능 개발 및 검증에 사용.
 - **온라인 멀티플레이는 아직 미구현**입니다. 테스트 화면의 대전 메뉴는 흐름을 확인하기 위한 UI입니다.
 
+## 🤝 ChatGPT · Codex 공동 개발 안내
+
+이 프로젝트는 ChatGPT와 Codex가 **GitHub를 공통 코드 기준**으로 사용해 협업한다. 기능 브랜치에서 작업해 `test` PR로 통합하고, 검증/사용자 승인 후에만 `main`에 반영한다. 운영 배포는 코드 반영과 별도 승인 단계로 관리한다.
+
+- [AGENTS.md — AI 공통 개발 규칙](./AGENTS.md)
+- [AI_WORKFLOW.md — 역할 분담·브랜치·인수인계](./docs/AI_WORKFLOW.md)
+- [ARCHITECTURE.md — 현재 구현과 AWS 목표 아키텍처](./docs/ARCHITECTURE.md)
+- [DEVELOPMENT.md — 실행 및 검증 방법](./docs/DEVELOPMENT.md)
+- [DEPLOYMENT.md — AWS/GitHub Actions 배포 계획](./docs/DEPLOYMENT.md)
+- [CHANGELOG.md — 주요 변경 이력](./docs/CHANGELOG.md)
+
+> 현재 AWS 서버/배포 자동화/백엔드는 **준비·설계 단계**이며 완료된 기능으로 간주하지 않는다.
+
 ## 📋 개발 진행 현황
 
 - **[ROADMAP.md — 전체 로드맵 및 상태](./ROADMAP.md)**: 버전별 일정 대신 단계별 목표, 의존성, 완료 기준 관리

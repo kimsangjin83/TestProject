@@ -1,0 +1,120 @@
+name: Deploy Block Arena to AWS test
+
+# Deploys test branch static PWA only; does not touch the main GitHub Pages site.
+on:
+  push:
+    branches: [test]
+    paths:
+      - index.html
+      - style.css
+      - game.js
+      - service-worker.js
+      - manifest.webmanifest
+      - icon.svg
+      - icon-192.png
+      - scripts/deploy-blockarena-test.sh
+      - .github/workflows/deploy-blockarena-test.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: blockarena-aws-test-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Upload artifact and deploy via SSM
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      AWS_REGION: ap-northeast-2
+      S3_BUCKET: app-deploy-artifacts-apne2-f9f678bb
+      EC2_INSTANCE_ID: i-0bb005f29438601f2
+
+    steps:
+      - name: Check out test branch
+        uses: actions/checkout@v4
+
+      - name: Create deterministic static-site archive
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/blockarena-site"
+          cp index.html style.css game.js service-worker.js manifest.webmanifest icon.svg icon-192.png "$RUNNER_TEMP/blockarena-site/"
+          (
+            cd "$RUNNER_TEMP/blockarena-site"
+            zip -q "$RUNNER_TEMP/blockarena-${GITHUB_SHA}.zip" \
+              index.html style.css game.js service-worker.js manifest.webmanifest icon.svg icon-192.png
+          )
+          unzip -t "$RUNNER_TEMP/blockarena-${GITHUB_SHA}.zip" >/dev/null
+          sha256="$(sha256sum "$RUNNER_TEMP/blockarena-${GITHUB_SHA}.zip" | cut -d ' ' -f 1)"
+          echo "sha256=$sha256" >> "$GITHUB_OUTPUT"
+          echo "Archive SHA-256: $sha256"
+
+      - name: Assume AWS deploy role via OIDC
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::461729033931:role/github-actions-deploy-role
+          aws-region: ap-northeast-2
+          allowed-account-ids: '461729033931'
+
+      - name: Upload archive to private S3 bucket
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws s3api put-object \
+            --bucket "$S3_BUCKET" \
+            --key "blockarena/test/${GITHUB_SHA}.zip" \
+            --body "$RUNNER_TEMP/blockarena-${GITHUB_SHA}.zip" \
+            --region "$AWS_REGION" \
+            --query ETag --output text
+          echo "Uploaded blockarena/test/${GITHUB_SHA}.zip"
+
+      - name: Execute deploy script through AWS SSM
+        shell: bash
+        env:
+          ARCHIVE_SHA256: ${{ steps.package.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          [[ "${GITHUB_REF}" == 'refs/heads/test' ]]
+          [[ "${GITHUB_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$ARCHIVE_SHA256" =~ ^[0-9a-f]{64}$ ]]
+
+          # Script is in GitHub, encoded for safe one-line shell transport via SSM.
+          payload="$(base64 -w0 scripts/deploy-blockarena-test.sh)"
+          remote="printf '%s' '$payload' | base64 -d | bash -s -- '$S3_BUCKET' '$GITHUB_SHA' '$ARCHIVE_SHA256'"
+          jq -n --arg command "$remote" '{commands:[$command]}' > "$RUNNER_TEMP/ssm-params.json"
+
+          command_id="$(aws ssm send-command \
+            --instance-ids "$EC2_INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Block Arena test deploy ${GITHUB_SHA}" \
+            --timeout-seconds 900 \
+            --parameters "file://$RUNNER_TEMP/ssm-params.json" \
+            --query 'Command.CommandId' --output text)"
+          echo "SSM command ID: $command_id"
+
+          status="Pending"
+          for _ in $(seq 1 90); do
+            status="$(aws ssm get-command-invocation \
+              --command-id "$command_id" --instance-id "$EC2_INSTANCE_ID" \
+              --query Status --output text 2>/dev/null || echo Pending)"
+            case "$status" in
+              Success|Failed|TimedOut|Cancelled|Cancelling) break ;;
+              Pending|InProgress|Delayed) sleep 8 ;;
+              *) echo "Unexpected SSM status: $status"; sleep 8 ;;
+            esac
+          done
+
+          aws ssm get-command-invocation \
+            --command-id "$command_id" --instance-id "$EC2_INSTANCE_ID" \
+            --query '[Status,StandardOutputContent,StandardErrorContent]' --output text
+          if [[ "$status" != "Success" ]]; then
+            echo "::error::SSM deployment failed or timed out (status: $status)"
+            exit 1
+          fi
+          echo "Deployed test commit $GITHUB_SHA to /blockarena/"

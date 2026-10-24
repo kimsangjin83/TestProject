@@ -48,6 +48,8 @@ if ! command -v aws >/dev/null 2>&1; then
   curl -fLsS --retry 3 "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "$work/awscliv2.zip"
   mkdir -p "$work/awscli"
   python3 -m zipfile -e "$work/awscliv2.zip" "$work/awscli"
+  # Python's zipfile extraction does not preserve executable mode bits.
+  chmod 755 "$work/awscli/aws/install" "$work/awscli/aws/dist/aws"
   "$work/awscli/aws/install" --install-dir /usr/local/aws-cli --bin-dir /usr/local/bin
 fi
 

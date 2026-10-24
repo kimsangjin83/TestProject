@@ -2,7 +2,7 @@
 
 설치형 웹앱(PWA)으로 만드는 실시간 대전 블록 퍼즐 게임 프로토타입.
 
-현재 개발 단계 (2026-10-22):
+현재 개발 단계 (2026-10-24):
 - **운영 `main`**: v0.2 싱글 게임 + 모바일 전체화면 UI + 블록 파괴 효과 + 메인/싱글/멀티/기록/설정 메뉴 + 가로 회전 안내까지 반영.
 - **테스트 `test`**: v0.2 기능을 포함하고, 이후 신규 기능 개발 및 검증에 사용.
 - **온라인 멀티플레이는 아직 미구현**입니다. 테스트 화면의 대전 메뉴는 흐름을 확인하기 위한 UI입니다.
@@ -10,6 +10,7 @@
 ## 📋 개발 진행 현황
 
 - **[ROADMAP.md — 전체 로드맵 및 상태](./ROADMAP.md)**: 버전별 일정 대신 단계별 목표, 의존성, 완료 기준 관리
+- **[AWS 인프라 및 배포 운영 기록](./docs/AWS_DEPLOYMENT.md)**: EC2/SSM/GitHub OIDC 검증 결과와 S3 배포 예정 작업·비용
 - **[GitHub Issues — 할 일과 완료된 작업](https://github.com/kimsangjin83/TestProject/issues)**: 작업 체크리스트와 실제 진행 상태의 기준
 - **[GitHub Pull Requests](https://github.com/kimsangjin83/TestProject/pulls)**: test 검증 후 main 병합 이력
 - 최근 운영 반영: [메인 메뉴 PR #3](https://github.com/kimsangjin83/TestProject/pull/3) · [완료 Issue #7](https://github.com/kimsangjin83/TestProject/issues/7)
@@ -71,37 +72,58 @@ https://kimsangjin83.github.io/TestProject/
 
 현재 게임 내 '누적 방해 줄' 숫자는 **연습용 계산만** 하며 다른 사용자에게 전송되지는 않습니다.
 
-## 향후 AWS 운영 아키텍처 (계정·무료 자격 확인 대기)
+## AWS 인프라 구축 현황 (2026-10-24)
 
-현재 게임은 GitHub Pages에 배포 중이며 **AWS 환경으로 아직 이전하지 않았습니다**. 운영 환경은 사용자 AWS 계정/무료 혜택 확인 후 결정합니다.
+**서울 리전의 EC2 서버는 이미 생성·가동 중**이며 Nginx 외부 HTTP 접속, Systems Manager(SSM) 원격 명령, GitHub Actions OIDC 인증 및 SSM 원격 명령 실행 테스트까지 성공했습니다.
+
+다만 **게임 소스는 아직 AWS에 배포되지 않았습니다.** 현재 실제 플레이 가능한 사이트는 위의 **GitHub Pages**이며, AWS 웹 서버는 기본 Nginx 페이지 상태입니다. GitHub 저장소도 아직 **Public**입니다.
+
+| 항목 | 상태 |
+|---|---|
+| AWS EC2 | ✅ `app-server-01` · 서울 `ap-northeast-2` · `t3.small` (2 vCPU/2 GiB) |
+| 운영체제/디스크 | ✅ Ubuntu 24.04 LTS / EBS gp3 20 GiB |
+| Nginx | ✅ 설치·자동 실행·외부 HTTP 확인 |
+| 앱 배포 경로 | ✅ `/var/www/apps/blockarena` 생성 |
+| AWS SSM | ✅ Agent·IAM 역할 연결 및 Run Command 성공 |
+| GitHub OIDC/Actions | ✅ `test` 브랜치 → AWS IAM → SSM 원격 조회 테스트 성공 |
+| 배포용 S3 버킷 | ⏳ 아직 생성하지 않음 |
+| 게임 파일의 AWS 자동 배포 | ⏳ 미구현 |
+| HTTPS / 운영·테스트 분리 | ⏳ 미구현 |
+| Spring Boot / WebSocket / DB | ⏳ 실시간 대전 단계에서 도입 예정 |
+
+**연동 확인:** [GitHub Actions 검증 워크플로](./.github/workflows/verify-aws-ssm.yml) · [성공 실행 기록](https://github.com/kimsangjin83/TestProject/actions/runs/39926325077)
+
+### 목표 배포 구조 (아직 구축 중)
 
 ```text
-GitHub (main 운영 / test 개발·검증; 현재 Public)
-  │
-  └─ AWS Linux (EC2 또는 Lightsail, 비용 확인 후 결정)
-      ├─ Nginx: HTML/CSS/JS PWA + HTTPS/Reverse Proxy
-      └─ Spring Boot 3.x / Java 17+ : REST API · WebSocket
-          ├─ 방 생성/초대·READY
-          ├─ 매칭
-          ├─ 서버 기준 게임 상태/공격/승패 검증
-          └─ DB: 전적 저장 필요 시 도입
+ChatGPT / Codex → GitHub (test 개발 / main 운영)
+                         │
+                    GitHub Actions
+                         │
+                   AWS IAM OIDC
+                         │
+                   S3 배포 ZIP (예정)
+                         │
+                 AWS Systems Manager
+                         │
+                    EC2 + Nginx
+                         │
+                 정적 PWA 프론트엔드
+                         └─ Spring Boot REST/WebSocket (추후)
 ```
 
-- 1단계: [#22 AWS 계정·무료 혜택·월 비용 확인](https://github.com/kimsangjin83/TestProject/issues/22). 실제 서버 개설/과금은 아직 하지 않음.
-- 2단계: [#23 AWS 프론트 배포 및 GitHub Private 전환](https://github.com/kimsangjin83/TestProject/issues/23). 새 운영/테스트 주소 검증 후에만 GitHub Pages 의존성 제거.
-- 3단계: [#11 Spring Boot WebSocket 게임룸](https://github.com/kimsangjin83/TestProject/issues/11) → 1:1 친구 대전 → 공격 → 랜덤 매칭.
-- 최소 서버 검증에는 DB를 반드시 설치할 필요는 없음. 랭킹/계정이 필요하면 MariaDB 등 검토.
-- GitHub Private으로 바꿔도 **브라우저에 내려가는 JavaScript는 노출됨**. 대전 데이터는 서버에서 검증해야 함.
-- AWS 사용량은 서비스·리전·계정 혜택·퍼블릭 IPv4·EBS·전송량에 따라 과금될 수 있음.
+- **다음 작업:** 비공개 S3 배포 버킷 생성 → 최소 권한 설정 → GitHub Actions 배포 ZIP 업로드 → SSM/EC2 다운로드 및 Nginx 연결 → HTTPS/PWA 검증.
+- **운영 이관:** `test`에서 검증하고 사용자 승인 후 `main`에 반영합니다. AWS 서비스 확인 전까지 GitHub Pages를 유지합니다.
+- **비용:** 작은 배포 ZIP의 S3 저장·요청료는 월 1센트 미만 수준이 예상되지만, EC2/EBS/공인 IPv4/인터넷 송신료는 별도입니다. 크레딧 및 실제 과금은 AWS Billing에서 확인합니다.
+- **원본 보호:** AWS 운영과 롤백 검증 후 GitHub Private 전환을 검토합니다. 브라우저에 전달된 JS는 Private 전환만으로 비공개가 되지 않습니다.
 
-### 이전 배포 계획 변경
-Cloudflare Workers/Durable Objects 방식 대신 AWS + Spring Boot를 **우선 검토**하기로 했음. AWS 계정/예산 상태 확인에 따라 최종 사양 확정 예정.
+설정 내용, 보안 주의사항, 현재 테스트 결과 및 S3 비용 가정은 **[AWS 배포 운영 기록](./docs/AWS_DEPLOYMENT.md)**에 정리했습니다.
 
 ### 릴리스 진행 요약
 
 1. **✅ v0.1 운영**: 싱글플레이, PWA, 모바일 UI, 줄 제거 파괴 효과
 2. **✅ v0.2 운영**: 메인 메뉴/화면 전환, 가로 회전 안내 (PR #3 병합)
-3. **📋 AWS 환경 준비**: 계정·무료 자격 확인 → 프론트 AWS 이전·GitHub Private 전환 → Spring Boot 서버 개발
+3. **🔨 AWS 환경 준비**: EC2·Nginx·SSM·GitHub OIDC 검증 완료 → S3 기반 프론트 배포/HTTPS/Private 전환 예정 → Spring Boot 서버 개발
 4. **📋 v0.3 예정**: 싱글 기록 확장/설정 기능
 5. **📋 v0.4 예정**: 1:1 친구 방·WebSocket·공격 시스템
 6. **📋 v0.5 이후 예정**: 랜덤 자동 매칭, 4인 개인전, 2:2 팀전, 전적 및 랭킹

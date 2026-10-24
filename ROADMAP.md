@@ -1,6 +1,6 @@
 # Block Arena — 개발 로드맵
 
-> 마지막 정리: 2026-10-22 (KST) · 관리 원칙: **GitHub Issues가 작업 상태의 기준(Single Source of Truth)** 입니다. 이 문서는 마일스톤과 주요 의존성을 요약합니다. 날짜나 버전은 목표이며 확정 출시 일정이 아닙니다.
+> 마지막 정리: 2026-10-24 (KST) · 관리 원칙: **GitHub Issues가 작업 상태의 기준(Single Source of Truth)** 입니다. 이 문서는 마일스톤과 주요 의존성을 요약합니다. 날짜나 버전은 목표이며 확정 출시 일정이 아닙니다.
 
 ## 현재 기준선
 
@@ -8,34 +8,49 @@
 - **테스트 `test`**: 현재 v0.2와 동일한 게임 기능을 보유하며 이후 기능 개발/검증 브랜치로 유지. Git 히스토리는 운영의 병합 커밋과 별도로 관리됩니다.
 - **온라인 대전 서버**: 아직 미구현. 방 만들기, 초대코드, 빠른 매칭은 메뉴 흐름만 확인 가능하며 실제 서버 요청은 없음.
 - **저장 데이터**: 브라우저에 싱글 최고 점수만 저장. 온라인 전적·통계는 아직 없음.
+- **AWS 인프라**: EC2/Nginx/SSM·GitHub Actions OIDC 인증 및 원격 명령 테스트 성공. 게임의 AWS 자동 배포·HTTPS·S3는 아직 미구현([AWS 운영 기록](./docs/AWS_DEPLOYMENT.md)).
 - **관련 PR**: [#2 운영 병합](https://github.com/kimsangjin83/TestProject/pull/2) · [#3 v0.2 운영 병합](https://github.com/kimsangjin83/TestProject/pull/3)
 
-## 기술 방향 결정: AWS 우선 검토 (계정·비용 확인 대기)
+## AWS 기술 방향 및 실제 구축 상태 (2026-10-24)
 
-**2026-10-22 합의한 기본 방향**: 블럭아레나 정식 운영까지 고려해 Cloudflare 서버리스 대신 **AWS Linux 기반 서버 + Java/Spring Boot**를 우선 검토한다. **2026-10-22 현재 신규 AWS Free 계정과 가입 크레딧 US$100를 확인했으며, AWS 화면에 남은 184일·2027-04-22 무료 플랜 종료로 표시됨.** 콘솔 리전은 현재 시드니로 표시되므로 서버 구축 전 서울(`ap-northeast-2`)로 전환 예정. 인스턴스·월 예산은 미확정이며 **AWS 리소스는 아직 생성하지 않았다**.
+AWS Linux 서버 + Java/Spring Boot 방향을 확정하고, 서울 리전에 **EC2 서버를 생성**했다. 현재 **AWS에 게임이 서비스되고 있지는 않다.** Nginx 기본 페이지가 외부 HTTP로 표시되는 상태이며, 운영 게임은 GitHub Pages에서 계속 제공한다.
+
+| 구성 | 현황 |
+|---|---|
+| 신규 AWS Free 계정 | 가입 시 $100 크레딧과 당시 무료 플랜 종료일(2027-04-22) 확인; 잔여 크레딧은 Billing에서 재확인 |
+| EC2 | ✅ 서울 `ap-northeast-2` / `app-server-01` / `t3.small` (2 vCPU·2 GiB) / Ubuntu 24.04 |
+| 스토리지·웹 | ✅ EBS gp3 20 GiB, Nginx 설치·외부 HTTP 확인 |
+| 앱 경로 | ✅ `/var/www/apps/blockarena` 디렉터리 생성 |
+| SSM | ✅ SSM Agent 관리형 노드 등록, EC2 역할 연결, Run Command 조회 테스트 |
+| GitHub OIDC | ✅ `test` 브랜치에서 역할 Assume 및 SSM 명령 성공([실행 기록](https://github.com/kimsangjin83/TestProject/actions/runs/39926325077)) |
+| S3 아티팩트 저장소 | ⏳ 아직 미생성 |
+| GitHub Actions **실제 게임 배포** | ⏳ 미구현: 현재 워크플로는 원격 명령 연결 점검 전용 |
+| HTTPS·도메인·test/main 배포 분리 | ⏳ 미구현 |
+| Spring Boot WebSocket·DB | ⏳ 실시간 대전 구현 시 도입 |
+
+### 목표 서비스 구성
 
 ```text
-GitHub (현재 Public, AWS 전환/배포 검증 후 Private 검토)
-  ├─ main → AWS 운영 배포 (HTTPS, PWA)
-  └─ test → AWS 테스트 배포 (운영과 경로/설정 분리)
-             │
-        Nginx 정적 파일 + Reverse Proxy
-             │
-     Java 17+ / Spring Boot / WebSocket
-             │
-     게임룸 · 초대 코드 · READY · 매칭 · 대전 검증
-             │
-     DB는 영구 전적/계정 필요 시 도입 (초기 필수 아님)
+GitHub (현재 Public)
+  ├─ test → GitHub Actions → OIDC → S3 배포 ZIP(예정) → SSM → EC2 테스트 웹
+  └─ main → 검증/승인 후 운영 배포(추후 별도 워크플로)
+                                                        │
+                                                       Nginx
+                                                        │
+                                              블록 아레나 PWA(미배포)
+                                                        │
+                                Spring Boot WebSocket 게임 서버(추후)
+                                                        │
+                                           영구 전적/계정 DB(필요 시)
 ```
 
-- **서버 후보**: AWS EC2 우선 비교, AWS Lightsail을 월정액형 대안으로 검토. 초기 규모와 월 예산에 따라 1대 구성, 용량이 커지면 분리/확장.
-- **프론트 배포**: 우선 최소 구성으로 Nginx에서 기존 정적 PWA를 호스팅한다. 이후 CDN이 필요하면 S3 + CloudFront로 분리 가능.
-- **원본 보호**: GitHub Private 전환은 AWS 운영 배포와 롤백 확인 **이후** 수행. 브라우저 JavaScript 코드는 공개되는 점에 유의.
-- **서버 검증**: 멀티플레이에서 클라이언트가 보낸 공격량·점수·승패를 그대로 신뢰하지 않음. 서버가 게임 상태와 최종 판정 권한을 가짐.
-- **비용 우선 원칙**: 계정별 프리 티어/크레딧 만료일 확인 → 지역·인스턴스·EBS·IPv4·전송 비용 계산 → 예산 알림 설정 → 서버 개설. 구체 요금은 실제 계정 조건으로 결정.
-- **중간 운영**: AWS 배포가 검증되기 전까지 기존 GitHub Pages와 `main/test` 개발 구조를 유지.
+- **원본 보호**: AWS에서 운영·롤백·HTTPS/PWA를 확인한 후 GitHub Private 전환을 검토한다. 브라우저 JavaScript는 계속 다운로드 가능하다.
+- **서버 보안**: SSH는 일부 IP 대역으로 제한하고, 모바일 IP 변동 대응([#25](https://github.com/kimsangjin83/TestProject/issues/25))을 후속 작업으로 관리한다. 배포에는 SSH 개방 대신 SSM을 활용한다.
+- **클라우드 비용**: 작은 S3 배포 ZIP의 월 저장·요청료는 매우 작을 것으로 예상되지만, EC2/EBS/IPv4/인터넷 전송 등은 별도 산정·예산 알림이 필요하다.
+- **검증 기준**: OIDC/SSM 연결 성공 ≠ 게임 배포 완료. AWS에서 게임 페이지·PWA·HTTPS가 정상 동작할 때 프론트 이전을 완료 처리한다.
+- **자세한 운영 기록**: [docs/AWS_DEPLOYMENT.md](./docs/AWS_DEPLOYMENT.md).
 
-**진행 의존성**: [#22 AWS 계정/예산](https://github.com/kimsangjin83/TestProject/issues/22) → [#23 프론트 AWS 이전/Private 전환](https://github.com/kimsangjin83/TestProject/issues/23) 및 [#8 테스트 배포](https://github.com/kimsangjin83/TestProject/issues/8) → [#11 Spring Boot 게임서버](https://github.com/kimsangjin83/TestProject/issues/11) → [#12 1:1 방](https://github.com/kimsangjin83/TestProject/issues/12).
+**진행 의존성**: [#22 비용/예산](https://github.com/kimsangjin83/TestProject/issues/22)(서버 생성은 완료·비용 점검 지속) → [#23 프론트 AWS 이전](https://github.com/kimsangjin83/TestProject/issues/23) 및 [#8 test/운영 분리](https://github.com/kimsangjin83/TestProject/issues/8) → [#11 WebSocket 서버](https://github.com/kimsangjin83/TestProject/issues/11) → [#12 친구 방](https://github.com/kimsangjin83/TestProject/issues/12).
 
 ## 상태 정의
 
@@ -78,11 +93,12 @@ GitHub (현재 Public, AWS 전환/배포 검증 후 Private 검토)
 
 ## 다음 작업 우선순위
 
-1. **[#22](https://github.com/kimsangjin83/TestProject/issues/22) 진행 중**: 신규 Free 계정·US$100 크레딧·2027-04-22 종료일 확인 완료. 서울 리전 변경, EC2/Lightsail 비교, 월 예산·비용 경보 설정이 남아 있음. 계정 비밀번호/액세스 키/계정 ID는 저장소에 올리지 않는다.
-2. **설계 ([#22](https://github.com/kimsangjin83/TestProject/issues/22))**: 서울 리전 EC2 vs Lightsail, 최소 메모리 사양, EBS/IPv4/전송량 비용 비교 및 예산 알림 계획.
-3. **배포 전환 ([#23](https://github.com/kimsangjin83/TestProject/issues/23), [#8](https://github.com/kimsangjin83/TestProject/issues/8))**: 운영/테스트 분리, HTTPS/PWA 검증, GitHub Private 전환. 기존 Pages는 대체 경로 확인 시까지 유지.
-4. **백엔드 ([#11](https://github.com/kimsangjin83/TestProject/issues/11))**: Spring Boot REST/WebSocket 뼈대 → 1:1 친구 게임룸 ([#12](https://github.com/kimsangjin83/TestProject/issues/12)) → 동기화/공격 ([#13](https://github.com/kimsangjin83/TestProject/issues/13), [#14](https://github.com/kimsangjin83/TestProject/issues/14)).
-5. **기존 게임 개선 ([#9](https://github.com/kimsangjin83/TestProject/issues/9), [#10](https://github.com/kimsangjin83/TestProject/issues/10))**: 백엔드 준비와 독립적으로 기록·설정 기능은 test에서 순차 개발.
+1. **배포용 S3 / IAM 최소 권한 ([#23](https://github.com/kimsangjin83/TestProject/issues/23))**: 서울 리전에 비공개 배포 버킷 생성, GitHub 업로드·EC2 다운로드 권한 분리, 배포 파일 수명 주기 설정.
+2. **실제 test 배포 ([#23](https://github.com/kimsangjin83/TestProject/issues/23), [#8](https://github.com/kimsangjin83/TestProject/issues/8))**: 정적 PWA ZIP 생성 → S3 → SSM → Nginx 정적 경로 연결, 실패 처리 및 롤백 전략, 모바일 실기기 확인.
+3. **HTTPS / main 운영 분리**: 도메인·HTTPS·서비스 워커 검증, 운영 배포에 별도 승인 절차 적용. 새 배포 확인 전까지 GitHub Pages 유지.
+4. **비용·보안 ([#22](https://github.com/kimsangjin83/TestProject/issues/22), [#25](https://github.com/kimsangjin83/TestProject/issues/25))**: 크레딧/EC2/EBS/IPv4/트래픽 추적, 예산 알림 설정, SSH 접근 IP 변경 문제 개선.
+5. **실시간 대전 ([#11](https://github.com/kimsangjin83/TestProject/issues/11) → [#12](https://github.com/kimsangjin83/TestProject/issues/12))**: Spring Boot REST/WebSocket 뼈대, 친구 방/READY, 서버 권위 판정. 전적 DB는 추후 필요 시 도입.
+6. **게임 개선 ([#9](https://github.com/kimsangjin83/TestProject/issues/9), [#10](https://github.com/kimsangjin83/TestProject/issues/10))**: 기록·설정 기능을 test에서 계속 개발.
 
 ## 기술 및 결정 사항
 
@@ -92,8 +108,8 @@ GitHub (현재 Public, AWS 전환/배포 검증 후 Private 검토)
 - **인원**: 1:1 → 4인 개인전 → 2:2 팀전 순차 확장.
 - **공격 초안**: 1줄→0, 2줄→1, 3줄→2, 4줄→4방해 줄; 서버에서 검증 및 상쇄 구현.
 - **초기 계정**: 회원가입 강제 없이 닉네임/게스트 중심. 온라인 영구 전적이 필요해지면 계정 정책 결정.
-- **운영 플랫폼**: AWS Linux 서버(EC2 vs Lightsail 미확정) + Spring Boot WebSocket을 우선 검토. 현재는 GitHub Pages로 서비스 중.
-- **운영 비용**: AWS 계정별 크레딧/무료 조건과 EBS·IPv4·데이터 전송 요금을 확인하고, 예산 상한을 정하기 전에는 서버를 생성하지 않음.
+- **운영 플랫폼**: AWS 서울 리전 EC2/Ubuntu/Nginx 구축 완료. Spring Boot WebSocket은 추후 도입. 게임 자체는 현재 GitHub Pages로만 서비스 중.
+- **운영 비용**: EC2 서버는 이미 생성됨. 가입 당시 크레딧/무료 조건을 확인했고, 실제 사용액·EBS·IPv4·데이터 전송·S3 비용 및 AWS Budgets 알림은 점검할 예정.
 
 ## 작업 관리 절차
 

@@ -76,7 +76,7 @@ https://kimsangjin83.github.io/TestProject/
 
 **서울 리전의 EC2 서버는 이미 생성·가동 중**이며 Nginx 외부 HTTP 접속, Systems Manager(SSM) 원격 명령, GitHub Actions OIDC 인증 및 SSM 원격 명령 실행 테스트까지 성공했습니다.
 
-다만 **게임 소스는 아직 AWS에 배포되지 않았습니다.** 현재 실제 플레이 가능한 사이트는 위의 **GitHub Pages**이며, AWS 웹 서버는 기본 Nginx 페이지 상태입니다. GitHub 저장소도 아직 **Public**입니다.
+**AWS test 브랜치의 게임 파일 자동 배포가 성공했어.** 서버 내부 HTTP 스모크 테스트까지 완료했으며, **모바일에서 외부 URL 직접 접속·조작은 아직 확인 전**입니다. 기존 운영 사이트는 위의 **GitHub Pages**로 유지하고 저장소도 아직 **Public**입니다.
 
 | 항목 | 상태 |
 |---|---|
@@ -86,12 +86,14 @@ https://kimsangjin83.github.io/TestProject/
 | 앱 배포 경로 | ✅ `/var/www/apps/blockarena` 생성 |
 | AWS SSM | ✅ Agent·IAM 역할 연결 및 Run Command 성공 |
 | GitHub OIDC/Actions | ✅ `test` 브랜치 → AWS IAM → SSM 원격 조회 테스트 성공 |
-| 배포용 S3 버킷 | ⏳ 아직 생성하지 않음 |
-| 게임 파일의 AWS 자동 배포 | ⏳ 미구현 |
+| 배포용 S3 버킷 | ✅ 서울 리전 비공개 버킷 생성·공개 접근 차단 |
+| 게임 파일의 AWS 자동 배포 | ✅ `test` → GitHub Actions → S3 ZIP → SSM → EC2/Nginx 배포 및 서버 내부 HTTP 확인 |
 | HTTPS / 운영·테스트 분리 | ⏳ 미구현 |
 | Spring Boot / WebSocket / DB | ⏳ 실시간 대전 단계에서 도입 예정 |
 
-**연동 확인:** [GitHub Actions 검증 워크플로](./.github/workflows/verify-aws-ssm.yml) · [성공 실행 기록](https://github.com/kimsangjin83/TestProject/actions/runs/39926325077)
+**연동 확인:** [SSM 검증 워크플로](./.github/workflows/verify-aws-ssm.yml) · [test 자동 배포 워크플로](./.github/workflows/deploy-blockarena-test.yml) · [실제 배포 성공 실행](https://github.com/kimsangjin83/TestProject/actions/runs/40052567405)
+
+**AWS 테스트 웹 주소:** `http://13.209.18.69/blockarena/` (당시 EC2 공인 IP 기준. 중지·재시작하면 변경 가능) · **HTTPS 미설정이므로 PWA 서비스 워커/설치 동작은 아직 미검증**
 
 ### 목표 배포 구조 (아직 구축 중)
 
@@ -102,7 +104,7 @@ ChatGPT / Codex → GitHub (test 개발 / main 운영)
                          │
                    AWS IAM OIDC
                          │
-                   S3 배포 ZIP (예정)
+                   S3 배포 ZIP ✅
                          │
                  AWS Systems Manager
                          │
@@ -112,7 +114,7 @@ ChatGPT / Codex → GitHub (test 개발 / main 운영)
                          └─ Spring Boot REST/WebSocket (추후)
 ```
 
-- **다음 작업:** 비공개 S3 배포 버킷 생성 → 최소 권한 설정 → GitHub Actions 배포 ZIP 업로드 → SSM/EC2 다운로드 및 Nginx 연결 → HTTPS/PWA 검증.
+- **다음 작업:** AWS 사이트 외부 접속 및 모바일 게임 조작 확인 → HTTPS/도메인 적용 → PWA 실기기 확인 → main 승인 배포/롤백 검증 → GitHub Private 전환 검토.
 - **운영 이관:** `test`에서 검증하고 사용자 승인 후 `main`에 반영합니다. AWS 서비스 확인 전까지 GitHub Pages를 유지합니다.
 - **비용:** 작은 배포 ZIP의 S3 저장·요청료는 월 1센트 미만 수준이 예상되지만, EC2/EBS/공인 IPv4/인터넷 송신료는 별도입니다. 크레딧 및 실제 과금은 AWS Billing에서 확인합니다.
 - **원본 보호:** AWS 운영과 롤백 검증 후 GitHub Private 전환을 검토합니다. 브라우저에 전달된 JS는 Private 전환만으로 비공개가 되지 않습니다.
@@ -123,7 +125,7 @@ ChatGPT / Codex → GitHub (test 개발 / main 운영)
 
 1. **✅ v0.1 운영**: 싱글플레이, PWA, 모바일 UI, 줄 제거 파괴 효과
 2. **✅ v0.2 운영**: 메인 메뉴/화면 전환, 가로 회전 안내 (PR #3 병합)
-3. **🔨 AWS 환경 준비**: EC2·Nginx·SSM·GitHub OIDC 검증 완료 → S3 기반 프론트 배포/HTTPS/Private 전환 예정 → Spring Boot 서버 개발
+3. **🔨 AWS 환경 준비**: EC2·Nginx·SSM·GitHub OIDC·S3 test 자동 배포 완료 → 외부 접속 및 HTTPS/Private 전환 예정 → Spring Boot 서버 개발
 4. **📋 v0.3 예정**: 싱글 기록 확장/설정 기능
 5. **📋 v0.4 예정**: 1:1 친구 방·WebSocket·공격 시스템
 6. **📋 v0.5 이후 예정**: 랜덤 자동 매칭, 4인 개인전, 2:2 팀전, 전적 및 랭킹

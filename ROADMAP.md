@@ -8,12 +8,12 @@
 - **테스트 `test`**: 현재 v0.2와 동일한 게임 기능을 보유하며 이후 기능 개발/검증 브랜치로 유지. Git 히스토리는 운영의 병합 커밋과 별도로 관리됩니다.
 - **온라인 대전 서버**: 아직 미구현. 방 만들기, 초대코드, 빠른 매칭은 메뉴 흐름만 확인 가능하며 실제 서버 요청은 없음.
 - **저장 데이터**: 브라우저에 싱글 최고 점수만 저장. 온라인 전적·통계는 아직 없음.
-- **AWS 인프라**: EC2/Nginx/SSM·GitHub Actions OIDC 인증 및 원격 명령 테스트 성공. 게임의 AWS 자동 배포·HTTPS·S3는 아직 미구현([AWS 운영 기록](./docs/AWS_DEPLOYMENT.md)).
+- **AWS 인프라**: EC2/Nginx/SSM·GitHub OIDC·S3 test 자동 배포 성공. 서버 내부 HTTP 확인 완료, 외부 실기기·HTTPS/PWA·main 배포는 남음([AWS 운영 기록](./docs/AWS_DEPLOYMENT.md)).
 - **관련 PR**: [#2 운영 병합](https://github.com/kimsangjin83/TestProject/pull/2) · [#3 v0.2 운영 병합](https://github.com/kimsangjin83/TestProject/pull/3)
 
 ## AWS 기술 방향 및 실제 구축 상태 (2026-10-24)
 
-AWS Linux 서버 + Java/Spring Boot 방향을 확정하고, 서울 리전에 **EC2 서버를 생성**했다. 현재 **AWS에 게임이 서비스되고 있지는 않다.** Nginx 기본 페이지가 외부 HTTP로 표시되는 상태이며, 운영 게임은 GitHub Pages에서 계속 제공한다.
+AWS Linux 서버 + Java/Spring Boot 방향을 확정하고, 서울 리전에 **EC2 서버를 생성**했다. GitHub `test` 정적 게임 파일을 S3/SSM을 통해 EC2에 **자동 배포하고 서버 내부 HTTP 스모크 테스트에 성공**했다. AWS 외부 실기기 검증·HTTPS는 아직이며, 기존 운영 게임은 GitHub Pages에서 계속 제공한다.
 
 | 구성 | 현황 |
 |---|---|
@@ -23,8 +23,8 @@ AWS Linux 서버 + Java/Spring Boot 방향을 확정하고, 서울 리전에 **E
 | 앱 경로 | ✅ `/var/www/apps/blockarena` 디렉터리 생성 |
 | SSM | ✅ SSM Agent 관리형 노드 등록, EC2 역할 연결, Run Command 조회 테스트 |
 | GitHub OIDC | ✅ `test` 브랜치에서 역할 Assume 및 SSM 명령 성공([실행 기록](https://github.com/kimsangjin83/TestProject/actions/runs/39926325077)) |
-| S3 아티팩트 저장소 | ⏳ 아직 미생성 |
-| GitHub Actions **실제 게임 배포** | ⏳ 미구현: 현재 워크플로는 원격 명령 연결 점검 전용 |
+| S3 아티팩트 저장소 | ✅ 비공개 버킷 생성, GitHub 업로드·EC2 다운로드 최소 권한 설정 |
+| GitHub Actions **실제 게임 배포** | ✅ test 브랜치 자동 배포·SSM 내부 HTTP 확인 ([실행 기록](https://github.com/kimsangjin83/TestProject/actions/runs/40052567405)) |
 | HTTPS·도메인·test/main 배포 분리 | ⏳ 미구현 |
 | Spring Boot WebSocket·DB | ⏳ 실시간 대전 구현 시 도입 |
 
@@ -32,12 +32,12 @@ AWS Linux 서버 + Java/Spring Boot 방향을 확정하고, 서울 리전에 **E
 
 ```text
 GitHub (현재 Public)
-  ├─ test → GitHub Actions → OIDC → S3 배포 ZIP(예정) → SSM → EC2 테스트 웹
+  ├─ test → GitHub Actions → OIDC → S3 배포 ZIP ✅ → SSM → EC2 /blockarena/ ✅
   └─ main → 검증/승인 후 운영 배포(추후 별도 워크플로)
                                                         │
                                                        Nginx
                                                         │
-                                              블록 아레나 PWA(미배포)
+                                              블록 아레나 정적 웹(test 배포 완료)
                                                         │
                                 Spring Boot WebSocket 게임 서버(추후)
                                                         │
@@ -47,7 +47,7 @@ GitHub (현재 Public)
 - **원본 보호**: AWS에서 운영·롤백·HTTPS/PWA를 확인한 후 GitHub Private 전환을 검토한다. 브라우저 JavaScript는 계속 다운로드 가능하다.
 - **서버 보안**: SSH는 일부 IP 대역으로 제한하고, 모바일 IP 변동 대응([#25](https://github.com/kimsangjin83/TestProject/issues/25))을 후속 작업으로 관리한다. 배포에는 SSH 개방 대신 SSM을 활용한다.
 - **클라우드 비용**: 작은 S3 배포 ZIP의 월 저장·요청료는 매우 작을 것으로 예상되지만, EC2/EBS/IPv4/인터넷 전송 등은 별도 산정·예산 알림이 필요하다.
-- **검증 기준**: OIDC/SSM 연결 성공 ≠ 게임 배포 완료. AWS에서 게임 페이지·PWA·HTTPS가 정상 동작할 때 프론트 이전을 완료 처리한다.
+- **검증 기준**: S3·SSM·서버 내부 HTTP 배포는 성공했지만 외부 스마트폰 접속·HTTPS/PWA는 검증 전이다. 전체 프론트 이전은 실기기 테스트·운영(main) 승인을 마친 후 완료 처리한다.
 - **자세한 운영 기록**: [docs/AWS_DEPLOYMENT.md](./docs/AWS_DEPLOYMENT.md).
 
 **진행 의존성**: [#22 비용/예산](https://github.com/kimsangjin83/TestProject/issues/22)(서버 생성은 완료·비용 점검 지속) → [#23 프론트 AWS 이전](https://github.com/kimsangjin83/TestProject/issues/23) 및 [#8 test/운영 분리](https://github.com/kimsangjin83/TestProject/issues/8) → [#11 WebSocket 서버](https://github.com/kimsangjin83/TestProject/issues/11) → [#12 친구 방](https://github.com/kimsangjin83/TestProject/issues/12).
@@ -73,8 +73,8 @@ GitHub (현재 Public)
 | v0.1 | P0 | 줄 제거 파괴·낙하 애니메이션 | [#6](https://github.com/kimsangjin83/TestProject/issues/6) | ✅ DONE · main |
 | v0.2 | P0 | 메인/싱글/멀티/기록/설정 메뉴, 가로 안내 | [#7](https://github.com/kimsangjin83/TestProject/issues/7) | ✅ DONE · main |
 | AWS 준비 | P0 | AWS 신규 Free 계정 확인 완료 · 서버 비용/사양 결정 | [#22](https://github.com/kimsangjin83/TestProject/issues/22) | 🔨 IN PROGRESS |
-| AWS 준비 | P0 | AWS 프론트 이전 및 GitHub Private 전환 | [#23](https://github.com/kimsangjin83/TestProject/issues/23) | 📋 TODO |
-| v0.3 | P1 | AWS test/운영 배포 분리 및 UI 검증 | [#8](https://github.com/kimsangjin83/TestProject/issues/8) | 📋 TODO |
+| AWS 준비 | P0 | AWS 프론트 이전 및 GitHub Private 전환 | [#23](https://github.com/kimsangjin83/TestProject/issues/23) | 🔨 IN PROGRESS · test 자동 배포 완료, HTTPS·운영 미완료 |
+| v0.3 | P1 | AWS test/운영 배포 분리 및 UI 검증 | [#8](https://github.com/kimsangjin83/TestProject/issues/8) | 🔨 IN PROGRESS · test만 배포 완료 |
 | v0.3 | P1 | 싱글 기록 확장/게임 결과 화면 | [#9](https://github.com/kimsangjin83/TestProject/issues/9) | 📋 TODO |
 | v0.3 | P2 | 효과음·진동·애니메이션/조작 설정 | [#10](https://github.com/kimsangjin83/TestProject/issues/10) | 📋 TODO |
 | v0.4 | P0 | AWS Spring Boot WebSocket 백엔드/룸 프로토콜 | [#11](https://github.com/kimsangjin83/TestProject/issues/11) | 📋 TODO |
@@ -93,8 +93,8 @@ GitHub (현재 Public)
 
 ## 다음 작업 우선순위
 
-1. **배포용 S3 / IAM 최소 권한 ([#23](https://github.com/kimsangjin83/TestProject/issues/23))**: 서울 리전에 비공개 배포 버킷 생성, GitHub 업로드·EC2 다운로드 권한 분리, 배포 파일 수명 주기 설정.
-2. **실제 test 배포 ([#23](https://github.com/kimsangjin83/TestProject/issues/23), [#8](https://github.com/kimsangjin83/TestProject/issues/8))**: 정적 PWA ZIP 생성 → S3 → SSM → Nginx 정적 경로 연결, 실패 처리 및 롤백 전략, 모바일 실기기 확인.
+1. **✅ 완료 · S3 / IAM 최소 권한 ([#23](https://github.com/kimsangjin83/TestProject/issues/23))**: 서울 리전 비공개 S3 생성, GitHub 업로드/EC2 다운로드 IAM 정책 분리, ZIP 배포·SHA-256 검증 및 내부 HTTP 확인. 오래된 배포 아티팩트 수명 주기는 후속 작업.
+2. **외부 실기기 검증 ([#23](https://github.com/kimsangjin83/TestProject/issues/23), [#8](https://github.com/kimsangjin83/TestProject/issues/8))**: AWS `/blockarena/` 페이지 접속·게임 조작 확인. 실패 시 로그·웹 경로 확인, 이후 배포 롤백 테스트와 보관 정책 적용.
 3. **HTTPS / main 운영 분리**: 도메인·HTTPS·서비스 워커 검증, 운영 배포에 별도 승인 절차 적용. 새 배포 확인 전까지 GitHub Pages 유지.
 4. **비용·보안 ([#22](https://github.com/kimsangjin83/TestProject/issues/22), [#25](https://github.com/kimsangjin83/TestProject/issues/25))**: 크레딧/EC2/EBS/IPv4/트래픽 추적, 예산 알림 설정, SSH 접근 IP 변경 문제 개선.
 5. **실시간 대전 ([#11](https://github.com/kimsangjin83/TestProject/issues/11) → [#12](https://github.com/kimsangjin83/TestProject/issues/12))**: Spring Boot REST/WebSocket 뼈대, 친구 방/READY, 서버 권위 판정. 전적 DB는 추후 필요 시 도입.
@@ -108,7 +108,7 @@ GitHub (현재 Public)
 - **인원**: 1:1 → 4인 개인전 → 2:2 팀전 순차 확장.
 - **공격 초안**: 1줄→0, 2줄→1, 3줄→2, 4줄→4방해 줄; 서버에서 검증 및 상쇄 구현.
 - **초기 계정**: 회원가입 강제 없이 닉네임/게스트 중심. 온라인 영구 전적이 필요해지면 계정 정책 결정.
-- **운영 플랫폼**: AWS 서울 리전 EC2/Ubuntu/Nginx 구축 완료. Spring Boot WebSocket은 추후 도입. 게임 자체는 현재 GitHub Pages로만 서비스 중.
+- **운영 플랫폼**: AWS 서울 리전 EC2/Ubuntu/Nginx/S3 test 자동 배포 성공(내부 HTTP 검증). 기존 운영은 GitHub Pages이고 Spring Boot WebSocket은 추후 도입.
 - **운영 비용**: EC2 서버는 이미 생성됨. 가입 당시 크레딧/무료 조건을 확인했고, 실제 사용액·EBS·IPv4·데이터 전송·S3 비용 및 AWS Budgets 알림은 점검할 예정.
 
 ## 작업 관리 절차
